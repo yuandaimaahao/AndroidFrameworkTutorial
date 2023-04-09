@@ -5,7 +5,7 @@
 
 这是写给应用开发的 Android Framework 教程，教程包含了 Android Framework 主要的核心基础内容：
 
-![写给应用开发的 Android Framework 教程](images/写给应用开发的%20Android%20Framework%20教程.png)
+![写给应用开发的 Android Framework 教程](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/images/%E5%86%99%E7%BB%99%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E7%9A%84%20Android%20Framework%20%E6%95%99%E7%A8%8B.png)
 
 
 ## 基础篇
@@ -51,7 +51,7 @@
 
 如果你也在学习 Android Framework，可以加我微信，我拉你进 Android Framework 技术交流群，一起交流进步：
 
-![](images/f6372075fbbf427f1e396cc7fa5dd6a.jpg)
+![](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/images/f6372075fbbf427f1e396cc7fa5dd6a.jpg)
 
 也可以关注公众号：
-![](images/qrcode_for_gh_ced867ac8552_430.jpg)
+![](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/images/qrcode_for_gh_ced867ac8552_430.jpg)
