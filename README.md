@@ -26,7 +26,7 @@
 * [使用 Android Studio 开发系统App](https://juejin.cn/post/7218362171964276795)  
 * [SEAndroid 使用极速上手](https://juejin.cn/post/7208472817460248637)               
 * [AOSP 添加开机自启动 Shell 脚本](https://juejin.cn/post/7219712310586474553)
-* AOSP APK 预制详解         
+* AOSP APK 预制详解(Android 8 以后，情况变得复杂，需要修改不少的 PMS 代码，这部分放在 PMS 解析部分来讲解)         
 
 ## Binder
 
