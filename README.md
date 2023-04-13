@@ -9,22 +9,31 @@
 
 ## 基础篇
 
-* [Ubuntu 使用快速入门](https://juejin.cn/post/7203571284558381117)
-* [Make 构建工具入门](https://juejin.cn/post/7203931072261193787)
+基础篇给大家推荐一些我看过和正在看的书：
+
+* Linux 基本使用：《Linux运维之道第二版》
+* Shell 脚本编程：《Linux Shell 核心编程指南》
+* C 语言：《一站式学习 C 编程》 《C 语言非常道》 《嵌入式C语言自我修养》
+* C++：《21天学通 C++ 》Siddhartha Rao
+
+基础性的知识需要长期坚持不懈地学习以及复习和记忆。以下是我学习过程中积累的笔记和思维导图供大家参考和复习：
+
+
+
 
 ## AOSP快速上手路线
 
-
+* [Ubuntu 使用快速入门](https://juejin.cn/post/7203571284558381117)
 * [AOSP 极速上手](https://juejin.cn/post/7202634945171537977)
 * [系统开发工具](https://juejin.cn/post/7216495812577427517)
-
+* [Make 构建工具入门](https://juejin.cn/post/7203931072261193787)
 * [添加 Product](https://juejin.cn/post/7203958049983529015)
 * [AOSP 中添加 C/C++、Java 可执行程序](https://juejin.cn/post/7216624116337508412/)
 * [AOSP 中添加 C/C++、Java 库](https://juejin.cn/post/7217279252316045372)         
 * [AOSP 添加配置文件与删除已有模块](https://juejin.cn/post/7217644586868391996/)
 * [AOSP 添加系统 App 源码](https://juejin.cn/post/7207374216127103033/)              
 * [使用 Android Studio 开发系统App](https://juejin.cn/post/7218362171964276795)  
-* [SEAndroid 使用极速上手](https://juejin.cn/post/7208472817460248637)               
+* [SEAndroid 使用极速上手](https://juejin.cn/post/7208472817460248637)         
 * [AOSP 添加开机自启动 Shell 脚本](https://juejin.cn/post/7219712310586474553)
 * AOSP APK 预制详解(Android 8 以后，情况变得复杂，需要修改不少的 PMS 代码，这部分放在 PMS 解析部分来讲解)         
 
