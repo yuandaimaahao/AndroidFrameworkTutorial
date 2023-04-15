@@ -1,0 +1,533 @@
+# Binder 服务获取与使用过程情景分析之C语言篇
+
+本文基于 `Android10` 源码环境
+
+
+示例程序思路参考自[韦东山老师开源代码](https://github.com/weidongshan/APP_0003_Binder_C_App)，在此基础上针对 Android10 平台重写调试适配。
+
+服务获取与使用过程如下：
+
+* client 调用 svcmgr_lookup 向 ServiceManager 获取到 hello 服务的 hanlde 值
+* client 构造好 binder_io 数据，binder_call 向 Server 发起远程调用
+
+## 1. Client 获取服务过程
+
+binder_client.c ：
+
+```c
+int main(int argc, char **argv)
+{
+   
+    //......
+
+	//获取 hello 服务的 handle 值
+	g_handle = svcmgr_lookup(bs, svcmgr, "hello");
+	if (!g_handle) {
+        return -1;
+	} 
+
+    //......
+
+}
+```
+
+svcmgr_lookup 用于发起远程调用，查找服务的 handle 值，handle 值是服务在内核中的索引，通过 handle 我们就能找到服务所在的目标进程了
+
+svcmgr_lookup 函数有三个参数：
+* struct binder_state *bs ： binder_open 返回的 binder 状态值
+* target：目标进程的 handle 值，ServiceManager 对应的 handle 值固定为 0
+* name：服务的名字
+
+```c
+/**
+ * 根据服务的名字（name），返回服务在内核中的 handle 值
+ * target：目标服务的 handle 值
+ * name：服务的名字
+ */
+uint32_t svcmgr_lookup(struct binder_state *bs, uint32_t target, const char *name)
+{
+    uint32_t handle;
+    unsigned iodata[512/4];
+    struct binder_io msg, reply;
+
+    bio_init(&msg, iodata, sizeof(iodata), 4);
+    //第一个数据 0
+    bio_put_uint32(&msg, 0);  // strict mode header
+    //"android.os.IServiceManager"
+    bio_put_string16_x(&msg, SVC_MGR_NAME);
+    //服务的名字 "hello"
+    bio_put_string16_x(&msg, name);
+
+    //发起远程过程调用
+    //调用的方法是 SVC_MGR_CHECK_SERVICE
+    //client 端开始休眠
+    if (binder_call(bs, &msg, &reply, target, SVC_MGR_CHECK_SERVICE))
+        return 0;
+
+    //......
+}
+```
+
+发起远程调用后，Client 进入阻塞状态，ServiceManager 被唤醒，执行到以下代码：
+
+```c
+void binder_loop(struct binder_state *bs, binder_handler func)
+{
+
+    //......
+    for (;;) {
+        
+        //......
+        //ServieManager 从这里唤醒
+        //获取到 Server 传过来的数据
+        res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
+
+        if (res < 0) {
+            ALOGE("binder_loop: ioctl failed (%s)\n", strerror(errno));
+            break;
+        }
+
+        //解析收到的数据，并回调 func 方法
+        res = binder_parse(bs, 0, (uintptr_t) readbuf, bwr.read_consumed, func);
+
+        //......
+    }
+}
+```
+
+这里会解析我们收到的数据，我们先看看我们收到的数据的具体格式：
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230130105337.png)
+
+接下来看看 `binder_parse` 方法：
+
+```c
+int binder_parse(struct binder_state *bs, struct binder_io *bio,
+                 uintptr_t ptr, size_t size, binder_handler func)
+{
+    int r = 1;
+    uintptr_t end = ptr + (uintptr_t) size;
+
+    //可能存在多组数据，通过 while 循环将每个数据解析完后再退出循环
+    while (ptr < end) {
+        //获取到命令 cmd，不同的 cmd 执行不同的操作
+        uint32_t cmd = *(uint32_t *) ptr;
+        ptr += sizeof(uint32_t);
+        switch(cmd) {
+        //......
+        //会走到这个分支
+        case BR_TRANSACTION_SEC_CTX:
+        case BR_TRANSACTION: {
+            struct binder_transaction_data_secctx txn;
+            if (cmd == BR_TRANSACTION_SEC_CTX) {
+              //......
+            } else /* BR_TRANSACTION */ { //代码会走这里
+                if ((end - ptr) < sizeof(struct binder_transaction_data)) {
+                    ALOGE("parse: txn too small (binder_transaction_data)!\n");
+                    return -1;
+                }
+                //解析出 binder_transaction_data 结构体
+                memcpy(&txn.transaction_data, (void*) ptr, sizeof(struct binder_transaction_data));
+                ptr += sizeof(struct binder_transaction_data);
+
+                txn.secctx = 0;
+            }
+
+            //......
+            
+            if (func) {
+                unsigned rdata[256/4];
+                struct binder_io msg;
+                struct binder_io reply;
+                int res;
+                
+                bio_init(&reply, rdata, sizeof(rdata), 4);
+                //进一步解析数据
+                //解析出 binder_io 结构体
+                bio_init_from_txn(&msg, &txn.transaction_data);
+                //调用回调函数
+                res = func(bs, &txn, &msg, &reply);
+                //回复数据
+                if (txn.transaction_data.flags & TF_ONE_WAY) {
+                    binder_free_buffer(bs, txn.transaction_data.data.ptr.buffer);
+                } else {
+                    binder_send_reply(bs, &reply, txn.transaction_data.data.ptr.buffer, res);
+                }
+            }
+            break;
+        }
+        //......
+        default:
+            ALOGE("parse: OOPS %d\n", cmd);
+            return -1;
+        }
+    }
+
+    return r;
+}
+```
+
+上面的代码走到 `res = func(bs, &txn, &msg, &reply);` 时就会执行到 binder_loop 传入的回调函数 `svcmgr_handler`：
+
+```c
+//已删减部分不相关代码
+int svcmgr_handler(struct binder_state *bs,
+                   struct binder_transaction_data_secctx *txn_secctx,
+                   struct binder_io *msg,
+                   struct binder_io *reply)
+{
+   
+   //...... 省略部分代码
+
+    //根据 code 值调用不同的方法
+    //当前场景下 code == SVC_MGR_CHECK_SERVICE 
+    switch(txn->code) {
+    case SVC_MGR_GET_SERVICE:
+    case SVC_MGR_CHECK_SERVICE:
+        //s 是服务的名字 hello
+        s = bio_get_string16(msg, &len);
+        if (s == NULL) {
+            return -1;
+        }
+        //从链表 svclist 中找到服务，返回服务的 handle
+        handle = do_find_service(s, len, txn->sender_euid, txn->sender_pid,
+                                 (const char*) txn_secctx->secctx);
+        if (!handle)
+            break;
+        //将 handle 写入 reply
+        bio_put_ref(reply, handle);
+        return 0;
+    //......
+    default:
+        ALOGE("unknown code %d\n", txn->code);
+        return -1;
+    }
+
+    bio_put_uint32(reply, 0);
+    return 0;
+}
+```
+
+接下来调用 binder_send_reply 将 reply 返回给 Client：
+
+```c
+void binder_send_reply(struct binder_state *bs,
+                       struct binder_io *reply,
+                       binder_uintptr_t buffer_to_free,
+                       int status)
+{
+    //构建了两个数据块
+    struct {
+        uint32_t cmd_free;
+        binder_uintptr_t buffer;
+        uint32_t cmd_reply;
+        struct binder_transaction_data txn;
+    } __attribute__((packed)) data;
+
+    //第一个命令告知驱动清理内存
+    data.cmd_free = BC_FREE_BUFFER;
+    data.buffer = buffer_to_free;
+    //第二个命令给 client 发送 reply 数据
+    //发送 BC_REPLY 接收方会收到 BR_REPLY
+    data.cmd_reply = BC_REPLY;
+    data.txn.target.ptr = 0;
+    data.txn.cookie = 0;
+    data.txn.code = 0;
+    if (status) {
+        data.txn.flags = TF_STATUS_CODE;
+        data.txn.data_size = sizeof(int);
+        data.txn.offsets_size = 0;
+        data.txn.data.ptr.buffer = (uintptr_t)&status;
+        data.txn.data.ptr.offsets = 0;
+    } else { //svcmgr_handler 返回0， 走这里
+        data.txn.flags = 0;
+        data.txn.data_size = reply->data - reply->data0;
+        data.txn.offsets_size = ((char*) reply->offs) - ((char*) reply->offs0);
+        data.txn.data.ptr.buffer = (uintptr_t)reply->data0;
+        data.txn.data.ptr.offsets = (uintptr_t)reply->offs0;
+    }
+    //发起写操作
+    binder_write(bs, &data, sizeof(data));
+}
+```
+
+接下来 Client 被唤醒：
+
+```c
+int binder_call(struct binder_state *bs,
+                struct binder_io *msg, struct binder_io *reply,
+                uint32_t target, uint32_t code)
+{
+    //......
+    for (;;) {
+        bwr.read_size = sizeof(readbuf);
+        bwr.read_consumed = 0;
+        bwr.read_buffer = (uintptr_t) readbuf;
+
+        //从这里唤醒
+        res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
+
+        if (res < 0) {
+            fprintf(stderr,"binder: ioctl failed (%s)\n", strerror(errno));
+            goto fail;
+        }
+        //解析收到的数据
+        res = binder_parse(bs, reply, (uintptr_t) readbuf, bwr.read_consumed, 0);
+        if (res == 0) return 0;
+        if (res < 0) goto fail;
+    }
+
+//......
+}
+```
+
+解析数据过程：
+
+```c
+int binder_parse(struct binder_state *bs, struct binder_io *bio,
+                 uintptr_t ptr, size_t size, binder_handler func)
+{
+    int r = 1;
+    uintptr_t end = ptr + (uintptr_t) size;
+
+    while (ptr < end) {
+        uint32_t cmd = *(uint32_t *) ptr;
+        ptr += sizeof(uint32_t);
+
+        switch(cmd) {
+        //......
+        //代码走这里
+        case BR_REPLY: {
+            struct binder_transaction_data *txn = (struct binder_transaction_data *) ptr;
+            if ((end - ptr) < sizeof(*txn)) {
+                ALOGE("parse: reply too small!\n");
+                return -1;
+            }
+            binder_dump_txn(txn);
+            if (bio) {
+                //将数据解析到 bio 中，也就是传入的 reply
+                bio_init_from_txn(bio, txn);
+                bio = 0;
+            } else {
+                /* todo FREE BUFFER */
+            }
+            ptr += sizeof(*txn);
+            r = 0;
+            break;
+        }
+        default:
+            ALOGE("parse: OOPS %d\n", cmd);
+            return -1;
+        }
+    }
+
+    return r;
+}
+```
+
+解析出 reply 后，代码回到 binder_call，binder_call 接着又返回到 svcmgr_lookup：
+
+```c
+uint32_t svcmgr_lookup(struct binder_state *bs, uint32_t target, const char *name)
+{
+    uint32_t handle;
+    unsigned iodata[512/4];
+    struct binder_io msg, reply;
+
+    bio_init(&msg, iodata, sizeof(iodata), 4);
+    bio_put_uint32(&msg, 0);  // strict mode header
+    bio_put_string16_x(&msg, SVC_MGR_NAME);
+    bio_put_string16_x(&msg, name);
+
+    //从这里返回
+    //handle 值已写入 reply
+    if (binder_call(bs, &msg, &reply, target, SVC_MGR_CHECK_SERVICE))
+        return 0;
+
+    //从 reply 中解析出 handle
+    handle = bio_get_ref(&reply);
+
+    if (handle)
+        binder_acquire(bs, handle);
+
+    //告知驱动，binder 调用已完成
+    binder_done(bs, &msg, &reply);
+
+    return handle;
+}
+```
+
+到这里，client 获取到 hello 服务的 handle 值，服务请求阶段完毕。
+
+## 2. 服务的使用过程
+
+服务的使用过程就是调用 Client 端 sayhello 的过程：
+
+```c
+void sayhello(void)
+{
+    unsigned iodata[512/4];
+    struct binder_io msg, reply;
+
+	/* 构造binder_io */
+    bio_init(&msg, iodata, sizeof(iodata), 4);
+   
+
+	/* 放入参数 */
+    bio_put_uint32(&msg, 0);  // strict mode header
+    bio_put_string16_x(&msg, "IHelloService");
+
+	/* 调用binder_call */
+    if (binder_call(g_bs, &msg, &reply, g_handle, HELLO_SVR_CMD_SAYHELLO))
+        return ;
+	
+	/* 从reply中解析出返回值 */
+    binder_done(g_bs, &msg, &reply);
+	
+}
+```
+
+构造好 binder_io 数据，调用 binder_call 发起远程调用，客户端进入阻塞状态。
+
+Server 端从 binder_loop 中唤醒，进入到回调函数 `test_server_handler`
+
+```c
+binder_loop(bs, test_server_handler);
+
+int test_server_handler(struct binder_state *bs,
+                struct binder_transaction_data_secctx *txn_secctx,
+                struct binder_io *msg,
+                struct binder_io *reply)
+{
+    struct binder_transaction_data *txn = &txn_secctx->transaction_data;
+	
+    int (*handler)(struct binder_state *bs,
+                   struct binder_transaction_data *txn,
+                   struct binder_io *msg,
+                   struct binder_io *reply);
+    //txn->target.ptr == svcmgr_publish 传入的hello_service_handler
+	handler = (int (*)(struct binder_state *bs,
+                   struct binder_transaction_data *txn,
+                   struct binder_io *msg,
+                   struct binder_io *reply))txn->target.ptr;
+	
+    //调用 hello_service_handler
+	return handler(bs, txn, msg, reply);
+}
+```
+接着调用 hello_service_handler 函数，根据传入的 `code == HELLO_SVR_CMD_SAYHELLO` 调用到函数 sayHello
+
+```c
+int hello_service_handler(struct binder_state *bs,
+                   struct binder_transaction_data_secctx *txn_secctx,
+                   struct binder_io *msg,
+                   struct binder_io *reply)
+{
+    struct binder_transaction_data *txn = &txn_secctx->transaction_data;
+
+	/* 根据txn->code知道要调用哪一个函数
+	 * 如果需要参数, 可以从msg取出
+	 * 如果要返回结果, 可以把结果放入reply
+	 */
+
+	/* sayhello
+	 * sayhello_to
+	 */
+	
+    uint16_t *s;
+	char name[512];
+    size_t len;
+    //uint32_t handle;
+    uint32_t strict_policy;
+	int i;
+
+
+    // Equivalent to Parcel::enforceInterface(), reading the RPC
+    // header with the strict mode policy mask and the interface name.
+    // Note that we ignore the strict_policy and don't propagate it
+    // further (since we do no outbound RPCs anyway).
+    strict_policy = bio_get_uint32(msg);
+
+    switch(txn->code) {
+    case HELLO_SVR_CMD_SAYHELLO:
+        //调用 sayhello
+		sayhello();
+        //写入返回值 0
+		bio_put_uint32(reply, 0); /* no exception */
+        return 0;
+
+    //...... 省略
+
+    default:
+        fprintf(stderr, "unknown code %d\n", txn->code);
+        return -1;
+    }
+
+    return 0;
+}
+
+```
+
+接着返回到 binder_parse 中，在调用 binder_send_reply 将数据返回给 client：
+
+```c
+int binder_parse(struct binder_state *bs, struct binder_io *bio,
+                 uintptr_t ptr, size_t size, binder_handler func)
+{
+            //......
+            if (func) {
+                unsigned rdata[256/4];
+                struct binder_io msg;
+                struct binder_io reply;
+                int res;
+
+                bio_init(&reply, rdata, sizeof(rdata), 4);
+                bio_init_from_txn(&msg, &txn.transaction_data);
+                res = func(bs, &txn, &msg, &reply);
+                if (txn.transaction_data.flags & TF_ONE_WAY) {
+                    binder_free_buffer(bs, txn.transaction_data.data.ptr.buffer);
+                } else {
+                    //走这里，返回数据
+                    binder_send_reply(bs, &reply, txn.transaction_data.data.ptr.buffer, res);
+                }
+            }
+            break;
+
+        //......
+        
+}
+```
+
+接着 client 收到数据，解析出返回值，Server 进入下一个循环，整个远程过程调用结束
+
+
+
+## 参考资料
+
+* 韦东山 Android 系统教程
+* 《Android 框架解密》
+* 《Android 源代码情景分析》
+* 《深入理解 Android 》系统图书
+* [Android Binder 魅族团队](http://kernel.meizu.com/android-binder.html)
+* [IT先森 Binder 系列博客](https://blog.csdn.net/tkwxty/article/details/102824924)
+* [芦半山 Binder 分析文章](https://juejin.cn/post/6844903961128878094)
+
+* [Binder中的SEAndroid控制](https://mp.weixin.qq.com/s/O0t2wOPmSDo-ZTYhTHidfQ)
+* [快乐安卓 Android Binder通信](https://blog.csdn.net/yangwen123/category_1609389.html)
+
+* [Binder Driver缺陷导致定屏的实战分析](https://mp.weixin.qq.com/s/8lr0q-6cKY8b5c-V_XZLNA)
+
+* [Binder | 代理对象的泄露及其检测](https://juejin.cn/post/7024432171779620894)
+
+## 关于
+
+如果你对 Android Framework 感兴趣，可以持续关注：
+
+* [掘金平台个人技术博客](https://juejin.cn/user/342703355728382/posts)
+* 我的个人公众号
+
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f5594694afbd42c28ae18e24ca3deed2~tplv-k3u1fbpfcp-zoom-1.image)
+* 我的个人微信（可以加我微信进 Android Framework 交流群）
+
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d6fbe5c079ef48888019c0d3e2da3342~tplv-k3u1fbpfcp-zoom-1.image)
+
