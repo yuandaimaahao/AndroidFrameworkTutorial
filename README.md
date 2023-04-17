@@ -23,7 +23,7 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 
 接着分享一个 Android Framework 核心基础的学习路线图：
 
-
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/%E5%86%99%E7%BB%99%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E7%9A%84%20Android%20Framework%20%E6%95%99%E7%A8%8B2.jpg)
 
 
 ## 2. 基础篇
