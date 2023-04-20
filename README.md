@@ -21,12 +21,18 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 
 废了这么多话，归根结底一句话——**Framework 是值得应用开发投入精力来学习的**
 
-接着分享一个 Android Framework 核心基础的学习路线图：
+以下是 Android Framework 核心基础的学习路线图：
 
-![](https://gitee.com/stingerzou/pic-bed/raw/master/img/%E5%86%99%E7%BB%99%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E7%9A%84%20Android%20Framework%20%E6%95%99%E7%A8%8B2.jpg)
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/%E5%86%99%E7%BB%99%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E7%9A%84%20Android%20Framework%20%E6%95%99%E7%A8%8B.jpg)
 
+清晰的学习路线图可以在 ` 链接：https://pan.baidu.com/s/1F0Ibi8pHcYT39HASy3zvNw 提取码：1234  ` 处下载到。 
+
+
+学习路线一共分为 11 个专题，接下来看看这 11 个专题都需要学习哪些内容：
 
 ## 2. 基础篇
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153209.png)
 
 基础知识涉及的面很广，我们应该做好长期学习的准备，学习过程中做好笔记，及时复习和记忆。另外，我们应该一边学习系统源码，一遍学习基础，遇到不会的，再回头看看基础，形成知识记忆到应用的闭环。千万不要基础学完了，再去学习系统源码，效率低，效果差。
 
@@ -51,7 +57,7 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
   * 《Linux 系统编程 杰克-本尼 佩尔松》
   * 《UNIX 环境高级编程》《Linux/Unix 系统编程手册》：这两本书可以作为编程过程中的字典使用
 * Linux 内核入门与操作系统基础
-  * [操作系统及Linux内核]，(https://www.icourse163.org/course/XIYOU-1461809182?from=searchPage&outVendor=zw_mooc_pcssjg_) 这是西安邮电大学提供的一套 mooc 课程，可供入门学习使用
+  * [操作系统及Linux内核](https://www.icourse163.org/course/XIYOU-1461809182?from=searchPage&outVendor=zw_mooc_pcssjg_)， 这是西安邮电大学提供的一套 mooc 课程，可供入门学习使用
   * 《深入理解 Linux 内核 第三版》   
   * 《奔跑吧Linux 内核 系列书籍》 
 * Linux 驱动开发入门：推荐韦东山老师 B 站分享的系列课程
@@ -59,13 +65,15 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 
 ## 3. AOSP快速上手路线
 
-这部分内容主要是让大家上手 Android 系统源码，对系统开发有一个感性的认知，计划分享以下内容：
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153046.png)
+
+这部分内容主要是让大家上手 Android 系统源码，对系统开发有一个感性的认知，主要有以下内容：
 
 * [AOSP 极速上手](https://juejin.cn/post/7202634945171537977)
 * [系统开发工具](https://juejin.cn/post/7216495812577427517)
 * [添加 Product](https://juejin.cn/post/7203958049983529015)
 * pixel4 源码编译与刷机
-* 系统开发案例1——儿童学习机家长模式初探
+* 系统开发案例——儿童学习机家长模式初探
 * 系统模块添加
 * 系统 App 开发入门        
 * [添加开机自启动 Shell 脚本](https://juejin.cn/post/7219712310586474553)
@@ -74,6 +82,9 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 * 系统源码管理工具 Gerrit 搭建与使用
 
 ## 4.Binder
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153146.png)
+
 Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是整个 Android 系统的核心基础组件，在体验的系统开发的“快乐”以后，我们需要第一时间掌握 Binder 的里里外外。计划分享以下内容：
 
 * [Binder 基本原理](https://juejin.cn/post/7210175991837392933)
@@ -98,6 +109,8 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 
 ## 5.基础组件
 
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153351.png)
+
 所谓基础组件，就是系统源码中使用的较多的模块，需要学习的内容主要包括：
 
 * Android 源码中的智能指针
@@ -105,8 +118,11 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 * Android 日志系统使用与分析
 * Android 中的权限管理
 * Android 匿名共享
+* 基础组件面试题解析
 
 ## 6.Hal 与硬件服务
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153441.png)
 
 Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，主要学习以下内容：
 
@@ -116,8 +132,14 @@ Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，
 * 通过 JNI 访问到 Hal 层接口
 * Framework 中添加访问 Hello Driver 的硬件服务 
 * 编写 App 访问硬件服务 
+* HwBinder 分析上
+* HwBinder 分析中
+* HwBinder 分析下
+* Hal 层面试题分析
 
 ## 7.构造系统
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153458.png)
 
 有的时候我们可能需要修改构造系统的行为，这需要我们对 AOSP 的构造系统有基本的认识，下面是构造系统的学习顺序：
 
@@ -125,8 +147,11 @@ Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，
 * 构造系统初始化
 * 编译过程解析
 * 打包流程解析
+* 构造系统面试题分析
   
 ## 8. 应用层框架
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153554.png)
 
 应用层框架是应用开发接触最频繁的组件，主要掌握以下几个方面：
 
@@ -137,17 +162,27 @@ Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，
   * 广播机制
 * Handler与Looper消息处理机制
 * PackageManagerService 工作流程与原理
+* 应用层框架面试题分析
 
 ## 9.系统启动过程
 
-系统启动过程是我们常打交道的部分，需要熟悉以下内容：
+系统启动是我们常打交道的部分，其流程如下图所示：
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417154556.png)
+
+图片来自[这里](https://github.com/jeanboydev/Android-ReadTheFuckingSourceCode/blob/master/article/android/framework/Android-%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B.md)
+
+主要熟悉以下内容：
 
 * 系统启动过程整体流程
 * init 进程解析
 * zygote 进程解析
 * SystemServer 进程解析
+* 系统启动过程面试题分析
 
 ## 10.Android 图形系统
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417154734.png)
 
 Android 图形系统是系统框架中一个非常重要的子系统，我们从以下几个方面来学习和理解图形系统的整体框架：
 
@@ -157,8 +192,11 @@ Android 图形系统是系统框架中一个非常重要的子系统，我们从
 * WMS 实现与剖析
 * Android View 系统分析
 * VSync 原理解析
-
+* Android 图形系统面试题分析
+  
 ## 11.Android 输入系统
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417154922.png)
 
 输入系统主要分为输入子系统和 IMS，我们重以下几个角度来学习 Android 的输入系统：
 
@@ -166,22 +204,25 @@ Android 图形系统是系统框架中一个非常重要的子系统，我们从
 * 事件的读取
 * 事件的分发
 * 事件的处理
+* Android 输入系统面试题分析
 
 ## 12.系统应用
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417154938.png)
 
 系统开发的大部分内容是做系统应用开发，常修改的系统应用如下：
 
 * Settings
 * Launcher
 * SystemUI
+* 系统应用开发相关面试题分析
 
+## 总结
+
+在掌握了这 11 个专题后，不论是继续研究 Framework 中其他模块，或是参与 App 开发，又或是研究内核与驱动，我相信，你一定早已是是游刃有余了！
 
 ## 关于
 
-如果你也在学习 Android Framework，可以加我微信，我拉你进 Android Framework 技术交流群，一起交流进步：
+如果你对 Framework 感兴趣或者正在学习 Framework，可以关注我的微信公众号，我会在公众号上持续分享我的经验，帮助正在学习的你少走一些弯路。学习过程中如果你有疑问或者你的经验想要分享给大家可以添加我的微信，我拉你进技术交流群。
 
-![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230415104713.png)
-
-也可以关注公众号：
-
-![](https://gitee.com/stingerzou/pic-bed/raw/master/img/qrcode_for_gh_ced867ac8552_430.jpg)
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/4e7348e352774883ecb19ab021d6cee.jpg)
