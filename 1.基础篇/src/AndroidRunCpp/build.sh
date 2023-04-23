@@ -1,9 +1,8 @@
-export ANDROID_NDK=/home/zzh0838/Android/Sdk/ndk/25.2.9519653
+export ANDROID_NDK=/home/zzh0838/android-ndk-r25b
 
 rm -r build
 mkdir build && cd build 
 
-# CMake的内置支持
 # cmake -DCMAKE_SYSTEM_NAME=Android \
 # 	-DCMAKE_SYSTEM_VERSION=29 \
 # 	-DCMAKE_ANDROID_ARCH_ABI=x86_64 \
@@ -11,12 +10,11 @@ mkdir build && cd build
 # 	-DCMAKE_ANDROID_STL_TYPE=c++_shared \
 # 	..
 
-# 工具链文件支持
 cmake \
     -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
     -DANDROID_ABI=x86_64 \
     -DANDROID_PLATFORM=android-29 \
-	  -DANDROID_STL=c++_shared \
-	  ..
+	-DANDROID_STL=c++_shared \
+	..
 
 cmake --build .
