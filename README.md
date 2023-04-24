@@ -60,8 +60,18 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
   * [操作系统及Linux内核](https://www.icourse163.org/course/XIYOU-1461809182?from=searchPage&outVendor=zw_mooc_pcssjg_)， 这是西安邮电大学提供的一套 mooc 课程，可供入门学习使用
   * 《深入理解 Linux 内核 第三版》   
   * 《奔跑吧Linux 内核 系列书籍》 
-* Linux 驱动开发入门：推荐韦东山老师 B 站分享的系列课程
+  * Linux 驱动开发入门：推荐韦东山老师 B 站分享的系列课程
 
+基础部分已分享内容：
+  * [Ubuntu 使用快速入门](https://juejin.cn/post/7203571284558381117)
+  * [Make 构建工具入门](https://juejin.cn/post/7203931072261193787)
+  * [理解 Unicode UTF-8 UTF-16 UTF-32](https://juejin.cn/post/7207365636694458425)
+  * [Linux Shell 脚本编程入门——核心基础语法](https://juejin.cn/post/7222931700439285817)
+  * [SEAndroid 使用极速上手](https://juejin.cn/post/7208472817460248637)
+  * [理解 C++ 的 Memory Order](https://juejin.cn/post/7216182763237146681)
+  * [Linux Shell 脚本编程入门1——核心基础语法](https://juejin.cn/post/7222931700439285817)
+  * [Linux Shell 脚本编程入门2——脚本自动化基础](https://juejin.cn/post/7223669247711887416)
+  * [Android 平台如何编译执行 C C++ 可执行程序](https://juejin.cn/post/7224898006842097725)
 
 ## 3. AOSP快速上手路线
 
@@ -69,17 +79,23 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 
 这部分内容主要是让大家上手 Android 系统源码，对系统开发有一个感性的认知，主要有以下内容：
 
-* [AOSP 极速上手](https://juejin.cn/post/7202634945171537977)
-* [系统开发工具](https://juejin.cn/post/7216495812577427517)
+* [AOSP 极速上手 视频教程](https://juejin.cn/post/7202634945171537977)
+* [系统开发工具 视频教程](https://juejin.cn/post/7216495812577427517)
 * [添加 Product](https://juejin.cn/post/7203958049983529015)
 * pixel4 源码编译与刷机
 * 系统开发案例——儿童学习机家长模式初探
 * 系统模块添加
-* 系统 App 开发入门        
+    *   [添加 C/C++、Java 可执行程序](https://juejin.cn/post/7216624116337508412)
+    *   [添加 C/C++、Java 库](https://juejin.cn/post/7217279252316045372)
+    *   [添加配置文件与删除已有模块](https://juejin.cn/post/7217644586868391996)
+* 系统 App 开发入门 
+  * [系统 App 源码添加](https://juejin.cn/post/7207374216127103033)             
+  * [使用 Android Studio 开发系统 App](https://juejin.cn/post/7207358268804579386)      
 * [添加开机自启动 Shell 脚本](https://juejin.cn/post/7219712310586474553)
 * 添加开机自启动 C++ 程序
 * APK 预制详解
 * 系统源码管理工具 Gerrit 搭建与使用
+
 
 ## 4.Binder
 
@@ -91,9 +107,9 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 * [Binder 程序示例之 C 语言篇](https://juejin.cn/post/7210245482861264955)
 * [Binder 服务注册过程情景分析之C语言篇](https://juejin.cn/post/7214342319347712057)
 * [Binder 服务获取与使用过程情景分析之C语言篇](https://juejin.cn/post/7215401973842706491)
-* Binder 程序示例之 C++ 语言篇
-* Binder C++ 程序分析之主要类解析
-* Binder 服务注册过程情景分析之 C++ 篇
+* [Binder C++ 程序示例](https://juejin.cn/post/7222109036588810297)
+* [Binder C++ 程序分析之主要类解析](https://juejin.cn/post/7223185420157763641/)
+* [Binder 服务注册过程情景分析之 C++ 篇](https://juejin.cn/post/7223185420157943865)
 * Binder 服务获取与使用过程情景分析之 C++ 篇
 * Binder 程序示例之 Java 篇
 * Binder Java 程序分析之主要类解析
@@ -126,7 +142,10 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 
 Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，主要学习以下内容：
 
-* Linux 驱动入门—— Hello Driver
+
+
+* [Kernel 下载与编译](https://juejin.cn/post/7207602567290765373)
+* [Linux 驱动开发入门](https://juejin.cn/post/7207607724900810812)
 * C 程序访问我们的驱动
 * Hal 层添加访问 Hello Dirver 的接口
 * 通过 JNI 访问到 Hal 层接口
