@@ -146,7 +146,6 @@ Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，
 
 * [Kernel 下载与编译](https://juejin.cn/post/7207602567290765373)
 * [Linux 驱动开发入门](https://juejin.cn/post/7207607724900810812)
-* C 程序访问我们的驱动
 * Hal 层添加访问 Hello Dirver 的接口
 * 通过 JNI 访问到 Hal 层接口
 * Framework 中添加访问 Hello Driver 的硬件服务 
