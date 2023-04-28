@@ -1,0 +1,5 @@
+service vendor_hello_hidl_service /vendor/bin/hw/jelly.hardware.hello_hidl@1.0-service
+	class hal
+	user system
+	group system
+

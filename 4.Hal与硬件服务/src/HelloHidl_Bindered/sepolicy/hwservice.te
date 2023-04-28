@@ -1,0 +1,1 @@
+type hello_hidl_hwservice, hwservice_manager_type;

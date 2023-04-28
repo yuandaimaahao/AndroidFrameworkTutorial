@@ -1,0 +1,36 @@
+// FIXME: your file license if you have one
+
+cc_library_shared {
+    name: "jelly.hardware.hello_hidl@1.0-impl",
+    relative_install_path: "hw",
+    proprietary: true,
+    srcs: [
+        "Hello.cpp",
+    ],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "jelly.hardware.hello_hidl@1.0",
+        "liblog",
+    ],
+}
+
+cc_binary {
+    name: "jelly.hardware.hello_hidl@1.0-service",
+    init_rc: ["jelly.hardware.hello_hidl@1.0-service.rc"],
+    vintf_fragments: ["jelly.hardware.hello_hidl@1.0-service.xml"],
+    defaults: ["hidl_defaults"],
+    relative_install_path: "hw",
+    vendor: true,
+    srcs: ["service.cpp"],
+    shared_libs: [
+        "jelly.hardware.hello_hidl@1.0",
+        "libhardware",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "liblog",
+    ],
+
+}

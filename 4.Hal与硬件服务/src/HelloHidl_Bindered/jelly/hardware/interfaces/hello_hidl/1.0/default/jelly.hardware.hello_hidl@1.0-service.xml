@@ -1,0 +1,11 @@
+<manifest version="1.0" type="device">
+  <hal format="hidl">
+        <name>jelly.hardware.hello_hidl</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IHello</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</manifest>

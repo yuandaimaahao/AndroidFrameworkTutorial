@@ -1,0 +1,5 @@
+package jelly.hardware.hello_hidl@1.0;
+
+interface IHello {
+    addition_hidl(uint32_t a,uint32_t b) generates (uint32_t total);
+};

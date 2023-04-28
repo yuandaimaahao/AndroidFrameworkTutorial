@@ -1,0 +1,13 @@
+cc_binary {
+    name: "hello_hidl_test",
+    srcs: ["hello_hidl_test.cpp"],
+    vendor: true,
+    shared_libs: [
+        "liblog",
+        "jelly.hardware.hello_hidl@1.0",
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "libutils",
+    ],
+}

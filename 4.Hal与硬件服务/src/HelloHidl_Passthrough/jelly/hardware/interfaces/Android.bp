@@ -1,0 +1,4 @@
+hidl_package_root {
+    name: "jelly.hardware",
+    path: "vendor/jelly/hardware/interfaces",
+}
