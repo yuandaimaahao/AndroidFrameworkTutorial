@@ -146,7 +146,7 @@ Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，
 
 * [Kernel 下载与编译](https://juejin.cn/post/7207602567290765373)
 * [Linux 驱动开发入门](https://juejin.cn/post/7207607724900810812)
-* Hal 层添加访问 Hello Dirver 的接口
+* [Hal 层添加访问 linux 驱动的接口](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/4.Hal%E4%B8%8E%E7%A1%AC%E4%BB%B6%E6%9C%8D%E5%8A%A1/3.Hal%20%E5%B1%82%E6%B7%BB%E5%8A%A0%E8%AE%BF%E9%97%AE%20Hello%20Dirver%20%E7%9A%84%E6%8E%A5%E5%8F%A3.md)
 * 通过 JNI 访问到 Hal 层接口
 * Framework 中添加访问 Hello Driver 的硬件服务 
 * 编写 App 访问硬件服务 
