@@ -30,7 +30,6 @@
 type hello_hidl, domain;
 type hello_hidl_exec, exec_type, vendor_file_type, file_type;
 
-
 init_daemon_domain(hello_hidl)
 
 add_hwservice(hello_hidl, hello_hidl_hwservice)
@@ -39,5 +38,7 @@ hwbinder_use(hello_hidl)
 #allow hello_hidl hello_hidl_hwservice:hwservice_manager { add find };
 #allow hello_hidl default_android_hwservice:hwservice_manager { add find };
 allow hello_hidl hidl_base_hwservice:hwservice_manager { add };
+allow hello_hidl hello_hidl_dev_t:chr_file { open read write };
 binder_call(hello_hidl,hwservicemanager)
 get_prop(hello_hidl,hwservicemanager_prop)
+

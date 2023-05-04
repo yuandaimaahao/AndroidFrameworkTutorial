@@ -1,0 +1,5 @@
+/vendor/bin/helloseandroid      u:object_r:hello_se_dt_exec:s0
+/dev/hello_seandroid_dev        u:object_r:hello_se_dev_t:s0
+/vendor/bin/initscript          u:object_r:initscript_dt_exec:s0
+/dev/hello                      u:object_r:hello_hidl_dev_t:s0
+/vendor/bin/hw/jelly\.hardware\.hello_hidl@1\.0-service    u:object_r:hello_hidl_exec:s0

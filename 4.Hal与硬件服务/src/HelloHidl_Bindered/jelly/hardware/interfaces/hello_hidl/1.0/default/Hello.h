@@ -23,6 +23,8 @@ using ::android::sp;
 struct Hello : public IHello {
     // Methods from ::jelly::hardware::hello_hidl::V1_0::IHello follow.
     Return<uint32_t> addition_hidl(uint32_t a, uint32_t b) override;
+    Return<uint32_t> write(const hidl_string& name) override;
+    Return<void> read(read_cb _hidl_cb) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
 

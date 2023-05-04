@@ -1,0 +1,8 @@
+type  hello_hidl_test, domain;
+type  hello_hidl_test_exec, exec_type, vendor_file_type, file_type;
+
+domain_auto_trans(shell, hello_hidl_test_exec, hello_hidl_test);
+
+get_prop(hello_hidl_test, hwservicemanager_prop)
+allow hello_hidl_test hello_hidl_hwservice:hwservice_manager find;
+hwbinder_use(hello_hidl_test);

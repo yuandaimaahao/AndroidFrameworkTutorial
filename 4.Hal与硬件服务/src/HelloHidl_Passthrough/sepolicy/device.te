@@ -1,0 +1,3 @@
+# 定义设备 /dev/hello_seandroid_dev 的类型
+type hello_se_dev_t, dev_type;
+type hello_hidl_dev_t, dev_type;
