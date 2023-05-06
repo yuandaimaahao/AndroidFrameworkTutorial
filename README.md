@@ -108,6 +108,7 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 * [Binder 服务注册过程情景分析之C语言篇](https://juejin.cn/post/7214342319347712057)
 * [Binder 服务获取与使用过程情景分析之C语言篇](https://juejin.cn/post/7215401973842706491)
 * [Binder C++ 程序示例](https://juejin.cn/post/7222109036588810297)
+* Binder 程序示例之 aidl-cpp 篇
 * [Binder C++ 程序分析之主要类解析](https://juejin.cn/post/7223185420157763641/)
 * [Binder 服务注册过程情景分析之 C++ 篇](https://juejin.cn/post/7223185420157943865)
 * Binder 服务获取与使用过程情景分析之 C++ 篇
@@ -117,6 +118,7 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 * Binder 服务获取与使用过程情景分析之 Java 篇
 * Binder 多线程分析
 * Binder 匿名服务分析
+* Binder 死亡通知机制
 * Binder 驱动实现分析上
 * Binder 驱动实现分析中
 * Binder 驱动实现分析下
