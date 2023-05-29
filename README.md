@@ -84,15 +84,22 @@
 
 Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是整个 Android 系统的核心基础组件，在体验的系统开发的“快乐”以后，我们需要第一时间掌握 Binder 的里里外外。计划分享以下内容：
 
+* 学习 Binder 的预备知识
+  * [虚拟内存与 Linux 文件访问接口](https://juejin.cn/post/7232459954581307448)
+  * [Linux 内核常用数据结构](https://juejin.cn/post/7234370256746348581)
+  * [linux 驱动开发入门](https://juejin.cn/post/7235309338097123388)
 * [Binder 基本原理](https://juejin.cn/post/7210175991837392933)
 * [Binder 程序示例之 C 语言篇](https://juejin.cn/post/7210245482861264955)
 * [Binder 服务注册过程情景分析之C语言篇](https://juejin.cn/post/7214342319347712057)
 * [Binder 服务获取与使用过程情景分析之C语言篇](https://juejin.cn/post/7215401973842706491)
+* Binder 驱动情景分析之 ServiceManager 启动过程
+* Binder 驱动情景分析之服务注册过程
+* Binder 驱动情景分析之服务获取与使用过程
 * [Binder C++ 程序示例](https://juejin.cn/post/7222109036588810297)
 * Binder 程序示例之 aidl-cpp 篇
 * [Binder C++ 程序分析之主要类解析](https://juejin.cn/post/7223185420157763641/)
 * [Binder 服务注册过程情景分析之 C++ 篇](https://juejin.cn/post/7223185420157943865)
-* Binder 服务获取与使用过程情景分析之 C++ 篇
+* [Binder 服务获取与使用过程情景分析之 C++ 篇](https://juejin.cn/post/7223410490763771941)
 * Binder 程序示例之 Java 篇
 * Binder Java 程序分析之主要类解析
 * Binder 服务注册过程情景分析之 Java 篇
@@ -100,9 +107,6 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 * Binder 多线程分析
 * Binder 匿名服务分析
 * Binder 死亡通知机制
-* Binder 驱动实现分析上
-* Binder 驱动实现分析中
-* Binder 驱动实现分析下
 * Binder 相关疑难 bug 解析
 * Binder 面试题解析
 

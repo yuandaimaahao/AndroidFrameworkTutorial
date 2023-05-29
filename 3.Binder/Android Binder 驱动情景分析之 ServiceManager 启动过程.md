@@ -1,13 +1,44 @@
 # Android Binder 驱动情景分析之 ServiceManager 启动过程
 
-AOSP 分支：android-10.0.0_r41
-Kernel 分支：android-goldfish-4.14-gchips
+这是一个 Binder 相关的系列教程,持续更新中：
+
+* 学习 Binder 的预备知识
+  * [虚拟内存与 Linux 文件访问接口](https://juejin.cn/post/7232459954581307448)
+  * [Linux 内核常用数据结构](https://juejin.cn/post/7234370256746348581)
+  * [linux 驱动开发入门](https://juejin.cn/post/7235309338097123388)
+* [Binder 基本原理](https://juejin.cn/post/7210175991837392933)
+* [Binder 程序示例之 C 语言篇](https://juejin.cn/post/7210245482861264955)
+* [Binder 服务注册过程情景分析之C语言篇](https://juejin.cn/post/7214342319347712057)
+* [Binder 服务获取与使用过程情景分析之C语言篇](https://juejin.cn/post/7215401973842706491)
+* Binder 驱动情景分析之 ServiceManager 启动过程
+* Binder 驱动情景分析之服务注册过程
+* Binder 驱动情景分析之服务获取与使用过程
+* [Binder C++ 程序示例](https://juejin.cn/post/7222109036588810297)
+* Binder 程序示例之 aidl-cpp 篇
+* [Binder C++ 程序分析之主要类解析](https://juejin.cn/post/7223185420157763641/)
+* [Binder 服务注册过程情景分析之 C++ 篇](https://juejin.cn/post/7223185420157943865)
+* [Binder 服务获取与使用过程情景分析之 C++ 篇](https://juejin.cn/post/7223410490763771941)
+* Binder 程序示例之 Java 篇
+* Binder Java 程序分析之主要类解析
+* Binder 服务注册过程情景分析之 Java 篇
+* Binder 服务获取与使用过程情景分析之 Java 篇
+* Binder 多线程分析
+* Binder 匿名服务分析
+* Binder 死亡通知机制
+* Binder 相关疑难 bug 解析
+* Binder 面试题解析
+
+本文系统源码版本：
+
+* AOSP 分支：android-10.0.0_r41
+* Kernel 分支：android-goldfish-4.14-gchips
 
 本文依托于[Binder 程序示例之 C 语言篇](https://juejin.cn/post/7210245482861264955)中介绍的应用层示例程序来对驱动的实现做情景化分析。
 
 ## 1. Binder 驱动的初始化
 
 内核启动时，会加载各类驱动，对于 binder 驱动，会执行 binder_init 函数， 完成驱动的注册与初始化。
+   
 
 ```c
 // drivers/android/binder.c
@@ -140,7 +171,7 @@ int main(int argc, char** argv)
 }
 ```
 
-### binder_open
+### 2.1 binder_open
 
 关注点1：在这里调用 binder_open 来完成 binder 初始化操作
 
@@ -281,7 +312,6 @@ struct binder_proc {
 * binder_open 的主要工作是初始化一个 binder_proc 结构体，并将其插入到全局链表 binder_procs 中
 
 
-## 2.2 ioctl 查询版本信息
 
 关注点 5 处，应用程序调用 ioctl 向内核查询 binder 版本信息：
 
@@ -372,7 +402,7 @@ mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, bs->fd, 0) -> vfs -> binder_mmap
 	if (proc->tsk != current->group_leader)
 		return -EINVAL;
 
-	// 映射区最多分配 4 m
+	// 映射区最多分配 4m
 	if ((vma->vm_end - vma->vm_start) > SZ_4M)
 		vma->vm_end = vma->vm_start + SZ_4M;
 
@@ -478,11 +508,22 @@ err_already_mapped:
 }
 ```
 
-可以看出，binder_mmap 主要工作是完成 binder_allc 结构体的初始化，并没有分配物理内存与映射。
+可以看出，binder_mmap 主要工作是完成 binder_proc 的成员 binder_allc 结构体的初始化，没有分配物理内存与映射。
+
+这里涉及一个常见的面试题，binder 支持传递的最大内存是多少？
+
+```c
+// 映射区最多分配 4m
+if ((vma->vm_end - vma->vm_start) > SZ_4M)
+	vma->vm_end = vma->vm_start + SZ_4M;
+```
+
+在驱动层面的代码看，最多可以分配 4m 的映射区，当然具体多少还和应用层传递过来的参数有关。
 
 
+### 2.2 binder_become_context_manager
 
-binder_become_context_manager，当前进程组成为 context_manager
+关注点 2 处，调用 binder_become_context_manager 函数，将当前进程设置为 context_manager：
 
 ```c
 int binder_become_context_manager(struct binder_state *bs)
@@ -506,7 +547,11 @@ int binder_become_context_manager(struct binder_state *bs)
 }
 ```
 
+ioctl 最终会调用到 binder 驱动中的 binder_ioctl：
+
+```c
 ioctl(bs->fd, BINDER_SET_CONTEXT_MGR_EXT, &obj) -> vfs -> binder_ioctl
+```
 
 ```c
 static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -535,24 +580,7 @@ static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	}
 
 	switch (cmd) {
-	case BINDER_WRITE_READ:
-		ret = binder_ioctl_write_read(filp, cmd, arg, thread);
-		if (ret)
-			goto err;
-		break;
-	case BINDER_SET_MAX_THREADS: {
-		int max_threads;
-
-		if (copy_from_user(&max_threads, ubuf,
-				   sizeof(max_threads))) {
-			ret = -EINVAL;
-			goto err;
-		}
-		binder_inner_proc_lock(proc);
-		proc->max_threads = max_threads;
-		binder_inner_proc_unlock(proc);
-		break;
-	}
+	//省略不相关的 case
 	case BINDER_SET_CONTEXT_MGR_EXT: { //代码走这里
 		struct flat_binder_object fbo;
 
@@ -567,68 +595,7 @@ static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			goto err;
 		break;
 	}
-	case BINDER_SET_CONTEXT_MGR:
-		ret = binder_ioctl_set_ctx_mgr(filp, NULL);
-		if (ret)
-			goto err;
-		break;
-	case BINDER_THREAD_EXIT:
-		binder_debug(BINDER_DEBUG_THREADS, "%d:%d exit\n",
-			     proc->pid, thread->pid);
-		binder_thread_release(proc, thread);
-		thread = NULL;
-		break;
-	case BINDER_VERSION: {
-		struct binder_version __user *ver = ubuf;
-
-		if (size != sizeof(struct binder_version)) {
-			ret = -EINVAL;
-			goto err;
-		}
-		if (put_user(BINDER_CURRENT_PROTOCOL_VERSION,
-			     &ver->protocol_version)) {
-			ret = -EINVAL;
-			goto err;
-		}
-		break;
-	}
-	case BINDER_GET_NODE_INFO_FOR_REF: {
-		struct binder_node_info_for_ref info;
-
-		if (copy_from_user(&info, ubuf, sizeof(info))) {
-			ret = -EFAULT;
-			goto err;
-		}
-
-		ret = binder_ioctl_get_node_info_for_ref(proc, &info);
-		if (ret < 0)
-			goto err;
-
-		if (copy_to_user(ubuf, &info, sizeof(info))) {
-			ret = -EFAULT;
-			goto err;
-		}
-
-		break;
-	}
-	case BINDER_GET_NODE_DEBUG_INFO: {
-		struct binder_node_debug_info info;
-
-		if (copy_from_user(&info, ubuf, sizeof(info))) {
-			ret = -EFAULT;
-			goto err;
-		}
-
-		ret = binder_ioctl_get_node_debug_info(proc, &info);
-		if (ret < 0)
-			goto err;
-
-		if (copy_to_user(ubuf, &info, sizeof(info))) {
-			ret = -EFAULT;
-			goto err;
-		}
-		break;
-	}
+	//省略不相关的 case
 	default:
 		ret = -EINVAL;
 		goto err;
@@ -646,6 +613,10 @@ err_unlocked:
 }
 
 
+接着会调用到 binder_ioctl_set_ctx_mgr：
+
+```c
+//为方便理解，省略部分非核心代码
 static int binder_ioctl_set_ctx_mgr(struct file *filp,
 				    struct flat_binder_object *fbo)
 {
@@ -653,41 +624,17 @@ static int binder_ioctl_set_ctx_mgr(struct file *filp,
 	struct binder_proc *proc = filp->private_data;
 	struct binder_context *context = proc->context;
 	struct binder_node *new_node;
-	kuid_t curr_euid = current_euid();
 
 	mutex_lock(&context->context_mgr_node_lock);
-	if (context->binder_context_mgr_node) {
-		pr_err("BINDER_SET_CONTEXT_MGR already set\n");
-		ret = -EBUSY;
-		goto out;
-	}
-	ret = security_binder_set_context_mgr(proc->tsk);
-	if (ret < 0)
-		goto out;
-	if (uid_valid(context->binder_context_mgr_uid)) {
-		if (!uid_eq(context->binder_context_mgr_uid, curr_euid)) {
-			pr_err("BINDER_SET_CONTEXT_MGR bad uid %d != %d\n",
-			       from_kuid(&init_user_ns, curr_euid),
-			       from_kuid(&init_user_ns,
-					 context->binder_context_mgr_uid));
-			ret = -EPERM;
-			goto out;
-		}
-	} else {
-		context->binder_context_mgr_uid = curr_euid;
-	}
-
-	//初始化一个 binder_node，并插入 binder_proc 的 nodes 节点 
+	
+	// binder_node 结构体用于描述一个应用层 bidner 服务
+	//binder_new_node 函数会初始化一个 binder_node，并插入 binder_proc 的 nodes 红黑树中 
 	new_node = binder_new_node(proc, fbo);
 	if (!new_node) {
 		ret = -ENOMEM;
 		goto out;
 	}
-	binder_node_lock(new_node);
-	new_node->local_weak_refs++;
-	new_node->local_strong_refs++;
-	new_node->has_strong_ref = 1;
-	new_node->has_weak_ref = 1;
+	
 	// 将新构建的 binder_node 赋值给 proc->context 的 binder_context_mgr_node 成员
 	context->binder_context_mgr_node = new_node;
 	binder_node_unlock(new_node);
@@ -698,7 +645,12 @@ out:
 }
 ```
 
-binder_loop
+binder_ioctl_set_ctx_mgr 用于将当前进程设置为ServiceManager, binder_node 结构体用于描述一个应用层 bidner 服务，binder_new_node 函数会构建一个新的 binder_node 结构体，并插入到 binder_proc 的 nodes 红黑树中。 接着会把 `proc->context->binder_context_mgr_node` 指针指向新创建的 node。
+
+
+### 2.3 binder_loop
+
+接着 ServiceManager 调用 binder_loop 进入读数据，处理数据的循环：
 
 ```c
 void binder_loop(struct binder_state *bs, binder_handler func)
@@ -754,56 +706,38 @@ int binder_write(struct binder_state *bs, void *data, size_t len)
     return res;
 } 
 
+```
 
-//告诉驱动，应用程序要进入循环了
+首先是调用 binder_write，告诉驱动应用程序进入循环，调用路线如下:
+
+```c
+binder_write -> ioctl(bs->fd, BINDER_WRITE_READ, &bwr) -> binder_ioctl
+
 //readbuf[0] = BC_ENTER_LOOPER;
 //ioctl 的基本封装
 //binder_write(bs, readbuf, sizeof(uint32_t));
-
 //res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
 
 static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	int ret;
-	struct binder_proc *proc = filp->private_data;
-	struct binder_thread *thread;
-	unsigned int size = _IOC_SIZE(cmd);
-	void __user *ubuf = (void __user *)arg;
 
-	/*pr_info("binder_ioctl: %d:%d %x %lx\n",
-			proc->pid, current->pid, cmd, arg);*/
-
-	binder_selftest_alloc(&proc->alloc);
-
-	trace_binder_ioctl(cmd, arg);
-
-	ret = wait_event_interruptible(binder_user_error_wait, binder_stop_on_user_error < 2);
-	if (ret)
-		goto err_unlocked;
-
-	thread = binder_get_thread(proc);
-	if (thread == NULL) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
+	//......
 	switch (cmd) {
-	case BINDER_WRITE_READ:
+	case BINDER_WRITE_READ: //代码走这里
 		ret = binder_ioctl_write_read(filp, cmd, arg, thread);
 		if (ret)
 			goto err;
 		break;
-	//......
-	//省略相关 case
+	//省略不相关 case
 	default:
 		ret = -EINVAL;
 		goto err;
 	}
-	ret = 0;
+
 	//......
-	return ret;
 }
 
+//接着调用 binder_ioctl_write_read
 static int binder_ioctl_write_read(struct file *filp,
 				unsigned int cmd, unsigned long arg,
 				struct binder_thread *thread)
@@ -818,17 +752,15 @@ static int binder_ioctl_write_read(struct file *filp,
 		ret = -EINVAL;
 		goto out;
 	}
+	//将应用层的数据拷贝到内核中
 	if (copy_from_user(&bwr, ubuf, sizeof(bwr))) {
 		ret = -EFAULT;
 		goto out;
 	}
-	binder_debug(BINDER_DEBUG_READ_WRITE,
-		     "%d:%d write %lld at %016llx, read %lld at %016llx\n",
-		     proc->pid, thread->pid,
-		     (u64)bwr.write_size, (u64)bwr.write_buffer,
-		     (u64)bwr.read_size, (u64)bwr.read_buffer);
-
+	
+	//......
 	if (bwr.write_size > 0) {
+		//接着调用 binder_thread_write 写数据
 		ret = binder_thread_write(proc, thread,
 					  bwr.write_buffer,
 					  bwr.write_size,
@@ -841,27 +773,9 @@ static int binder_ioctl_write_read(struct file *filp,
 			goto out;
 		}
 	}
-	if (bwr.read_size > 0) {
-		ret = binder_thread_read(proc, thread, bwr.read_buffer,
-					 bwr.read_size,
-					 &bwr.read_consumed,
-					 filp->f_flags & O_NONBLOCK);
-		trace_binder_read_done(ret);
-		binder_inner_proc_lock(proc);
-		if (!binder_worklist_empty_ilocked(&proc->todo))
-			binder_wakeup_proc_ilocked(proc);
-		binder_inner_proc_unlock(proc);
-		if (ret < 0) {
-			if (copy_to_user(ubuf, &bwr, sizeof(bwr)))
-				ret = -EFAULT;
-			goto out;
-		}
-	}
-	binder_debug(BINDER_DEBUG_READ_WRITE,
-		     "%d:%d wrote %lld of %lld, read return %lld of %lld\n",
-		     proc->pid, thread->pid,
-		     (u64)bwr.write_consumed, (u64)bwr.write_size,
-		     (u64)bwr.read_consumed, (u64)bwr.read_size);
+	
+	//......
+
 	if (copy_to_user(ubuf, &bwr, sizeof(bwr))) {
 		ret = -EFAULT;
 		goto out;
@@ -870,7 +784,7 @@ out:
 	return ret;
 }
 
-
+//binder_thread_write
 static int binder_thread_write(struct binder_proc *proc,
 			struct binder_thread *thread,
 			binder_uintptr_t binder_buffer, size_t size,
@@ -885,30 +799,23 @@ static int binder_thread_write(struct binder_proc *proc,
 	while (ptr < end && thread->return_error.cmd == BR_OK) {
 		int ret;
 
+		//cmd 就是应用层传入的 BC_ENTER_LOOPER
 		if (get_user(cmd, (uint32_t __user *)ptr))
 			return -EFAULT;
 		ptr += sizeof(uint32_t);
-		trace_binder_command(cmd);
-		if (_IOC_NR(cmd) < ARRAY_SIZE(binder_stats.bc)) {
-			atomic_inc(&binder_stats.bc[_IOC_NR(cmd)]);
-			atomic_inc(&proc->stats.bc[_IOC_NR(cmd)]);
-			atomic_inc(&thread->stats.bc[_IOC_NR(cmd)]);
-		}
+		
+		//......
+
 		switch (cmd) {
-		//省略不相关 case
+		
 		case BC_ENTER_LOOPER:
-			binder_debug(BINDER_DEBUG_THREADS,
-				     "%d:%d BC_ENTER_LOOPER\n",
-				     proc->pid, thread->pid);
 			if (thread->looper & BINDER_LOOPER_STATE_REGISTERED) {
 				thread->looper |= BINDER_LOOPER_STATE_INVALID;
-				binder_user_error("%d:%d ERROR: BC_ENTER_LOOPER called after BC_REGISTER_LOOPER\n",
-					proc->pid, thread->pid);
 			}
-			//赋值标志位，表示应用层已进入 loop
+			//操作很简单，给 thread->looper 或一个 BINDER_LOOPER_STATE_ENTERED
 			thread->looper |= BINDER_LOOPER_STATE_ENTERED;
 			break;
-		//省略不相关 case
+		
 		default:
 			pr_err("%d:%d unknown command %d\n",
 			       proc->pid, thread->pid, cmd);
@@ -918,64 +825,40 @@ static int binder_thread_write(struct binder_proc *proc,
 	}
 	return 0;
 }
-``` 
+```
 
-接着 binder_loop 向驱动读数据：
+接着就会进入循环，开始读数据：
 
 ```c
-//结合上面 bwr 的赋值，这里是要读数据
+ for (;;) {
+        //结合上面 bwr 的赋值，这里是要读数据
         bwr.read_size = sizeof(readbuf);
         bwr.read_consumed = 0;
         bwr.read_buffer = (uintptr_t) readbuf;
         //向驱动发起读操作
         res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
 
+        if (res < 0) {
+            ALOGE("binder_loop: ioctl failed (%s)\n", strerror(errno));
+            break;
+        }
+
+      //省略后续代码......
+    }
+
+//ioctl 最终会调用到驱动中的 binder_ioctl
 static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	int ret;
-	struct binder_proc *proc = filp->private_data;
-	struct binder_thread *thread;
-	unsigned int size = _IOC_SIZE(cmd);
-	void __user *ubuf = (void __user *)arg;
-
-	/*pr_info("binder_ioctl: %d:%d %x %lx\n",
-			proc->pid, current->pid, cmd, arg);*/
-
-	binder_selftest_alloc(&proc->alloc);
-
-	trace_binder_ioctl(cmd, arg);
-
-	ret = wait_event_interruptible(binder_user_error_wait, binder_stop_on_user_error < 2);
-	if (ret)
-		goto err_unlocked;
-
-	thread = binder_get_thread(proc);
-	if (thread == NULL) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
+	//......
 	switch (cmd) {
-	case BINDER_WRITE_READ:
+	//......
+	case BINDER_WRITE_READ: //代码走这里
 		ret = binder_ioctl_write_read(filp, cmd, arg, thread);
 		if (ret)
 			goto err;
 		break;
-	//省略不相关 case
-	default:
-		ret = -EINVAL;
-		goto err;
+		//......
 	}
-	ret = 0;
-err:
-	if (thread)
-		thread->looper_need_return = false;
-	wait_event_interruptible(binder_user_error_wait, binder_stop_on_user_error < 2);
-	if (ret && ret != -ERESTARTSYS)
-		pr_info("%d:%d ioctl %x %lx returned %d\n", proc->pid, current->pid, cmd, arg, ret);
-err_unlocked:
-	trace_binder_ioctl_done(ret);
-	return ret;
 }
 
 static int binder_ioctl_write_read(struct file *filp,
@@ -996,46 +879,18 @@ static int binder_ioctl_write_read(struct file *filp,
 		ret = -EFAULT;
 		goto out;
 	}
-	binder_debug(BINDER_DEBUG_READ_WRITE,
-		     "%d:%d write %lld at %016llx, read %lld at %016llx\n",
-		     proc->pid, thread->pid,
-		     (u64)bwr.write_size, (u64)bwr.write_buffer,
-		     (u64)bwr.read_size, (u64)bwr.read_buffer);
-
-	if (bwr.write_size > 0) {
-		ret = binder_thread_write(proc, thread,
-					  bwr.write_buffer,
-					  bwr.write_size,
-					  &bwr.write_consumed);
-		trace_binder_write_done(ret);
-		if (ret < 0) {
-			bwr.read_consumed = 0;
-			if (copy_to_user(ubuf, &bwr, sizeof(bwr)))
-				ret = -EFAULT;
-			goto out;
-		}
-	}
+	
+	//......
 	if (bwr.read_size > 0) {
+		//开始读数据
 		ret = binder_thread_read(proc, thread, bwr.read_buffer,
 					 bwr.read_size,
 					 &bwr.read_consumed,
 					 filp->f_flags & O_NONBLOCK);
-		trace_binder_read_done(ret);
-		binder_inner_proc_lock(proc);
-		if (!binder_worklist_empty_ilocked(&proc->todo))
-			binder_wakeup_proc_ilocked(proc);
-		binder_inner_proc_unlock(proc);
-		if (ret < 0) {
-			if (copy_to_user(ubuf, &bwr, sizeof(bwr)))
-				ret = -EFAULT;
-			goto out;
-		}
+	//......
 	}
-	binder_debug(BINDER_DEBUG_READ_WRITE,
-		     "%d:%d wrote %lld of %lld, read return %lld of %lld\n",
-		     proc->pid, thread->pid,
-		     (u64)bwr.write_consumed, (u64)bwr.write_size,
-		     (u64)bwr.read_consumed, (u64)bwr.read_size);
+	
+	//拷贝给用户空间
 	if (copy_to_user(ubuf, &bwr, sizeof(bwr))) {
 		ret = -EFAULT;
 		goto out;
@@ -1043,7 +898,6 @@ static int binder_ioctl_write_read(struct file *filp,
 out:
 	return ret;
 }
-
 
 static int binder_thread_read(struct binder_proc *proc,
 			      struct binder_thread *thread,
@@ -1065,19 +919,18 @@ static int binder_thread_read(struct binder_proc *proc,
 
 retry:
 	binder_inner_proc_lock(proc);
-	//判断三个调价
-	// !thread->transaction_stack  transaction_stack 为 nullptr true
-	// binder_worklist_empty_ilocked(&thread->todo) todo 链表为空 true
-	// (thread->looper & (BINDER_LOOPER_STATE_ENTERED | BINDER_LOOPER_STATE_REGISTERED)) , 进入循环时，thread->looper 设置为了 BINDER_LOOPER_STATE_ENTERED 所以是 true
-	wait_for_proc_work = binder_available_for_proc_work_ilocked(thread); //返回 true
+
+	//使用 proc->todo 而不是 thread->todo 
+	//这里会返回 true
+	wait_for_proc_work = binder_available_for_proc_work_ilocked(thread);
 	binder_inner_proc_unlock(proc);
 
+	//配置 looper 的值
 	thread->looper |= BINDER_LOOPER_STATE_WAITING;
 
-	trace_binder_wait_for_work(wait_for_proc_work,
-				   !!thread->transaction_stack,
-				   !binder_worklist_empty(proc, &thread->todo));
+	
 	if (wait_for_proc_work) {
+		//不会进入 if
 		if (!(thread->looper & (BINDER_LOOPER_STATE_REGISTERED |
 					BINDER_LOOPER_STATE_ENTERED))) {
 			binder_user_error("%d:%d ERROR: Thread waiting for process work before calling BC_REGISTER_LOOPER or BC_ENTER_LOOPER (state %x)\n",
@@ -1091,1340 +944,101 @@ retry:
 	if (non_block) {
 		if (!binder_has_work(thread, wait_for_proc_work))
 			ret = -EAGAIN;
-	} else {
-		//这里切进程，等待唤醒
-		ret = binder_wait_for_work(thread, wait_for_proc_work);
+	} else { //代码走这里，等待binder工作到来，当有远程访问时，会从这里唤醒
+		ret =  binder_wait_for_work(thread, wait_for_proc_work);
 	}
 
-	thread->looper &= ~BINDER_LOOPER_STATE_WAITING;
-
-	if (ret)
-		return ret;
-
-	while (1) {
-		uint32_t cmd;
-		struct binder_transaction_data_secctx tr;
-		struct binder_transaction_data *trd = &tr.transaction_data;
-		struct binder_work *w = NULL;
-		struct list_head *list = NULL;
-		struct binder_transaction *t = NULL;
-		struct binder_thread *t_from;
-		size_t trsize = sizeof(*trd);
-
-		binder_inner_proc_lock(proc);
-		if (!binder_worklist_empty_ilocked(&thread->todo))
-			list = &thread->todo;
-		else if (!binder_worklist_empty_ilocked(&proc->todo) &&
-			   wait_for_proc_work)
-			list = &proc->todo;
-		else {
-			binder_inner_proc_unlock(proc);
-
-			/* no data added */
-			if (ptr - buffer == 4 && !thread->looper_need_return)
-				goto retry;
-			break;
-		}
-
-		if (end - ptr < sizeof(tr) + 4) {
-			binder_inner_proc_unlock(proc);
-			break;
-		}
-		w = binder_dequeue_work_head_ilocked(list);
-		if (binder_worklist_empty_ilocked(&thread->todo))
-			thread->process_todo = false;
-
-		switch (w->type) {
-		case BINDER_WORK_TRANSACTION: {
-			binder_inner_proc_unlock(proc);
-			t = container_of(w, struct binder_transaction, work);
-		} break;
-		case BINDER_WORK_RETURN_ERROR: {
-			struct binder_error *e = container_of(
-					w, struct binder_error, work);
-
-			WARN_ON(e->cmd == BR_OK);
-			binder_inner_proc_unlock(proc);
-			if (put_user(e->cmd, (uint32_t __user *)ptr))
-				return -EFAULT;
-			cmd = e->cmd;
-			e->cmd = BR_OK;
-			ptr += sizeof(uint32_t);
-
-			binder_stat_br(proc, thread, e->cmd);
-		} break;
-		case BINDER_WORK_TRANSACTION_COMPLETE: {
-			binder_inner_proc_unlock(proc);
-			cmd = BR_TRANSACTION_COMPLETE;
-			if (put_user(cmd, (uint32_t __user *)ptr))
-				return -EFAULT;
-			ptr += sizeof(uint32_t);
-
-			binder_stat_br(proc, thread, cmd);
-			binder_debug(BINDER_DEBUG_TRANSACTION_COMPLETE,
-				     "%d:%d BR_TRANSACTION_COMPLETE\n",
-				     proc->pid, thread->pid);
-			kfree(w);
-			binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
-		} break;
-		case BINDER_WORK_NODE: {
-			struct binder_node *node = container_of(w, struct binder_node, work);
-			int strong, weak;
-			binder_uintptr_t node_ptr = node->ptr;
-			binder_uintptr_t node_cookie = node->cookie;
-			int node_debug_id = node->debug_id;
-			int has_weak_ref;
-			int has_strong_ref;
-			void __user *orig_ptr = ptr;
-
-			BUG_ON(proc != node->proc);
-			strong = node->internal_strong_refs ||
-					node->local_strong_refs;
-			weak = !hlist_empty(&node->refs) ||
-					node->local_weak_refs ||
-					node->tmp_refs || strong;
-			has_strong_ref = node->has_strong_ref;
-			has_weak_ref = node->has_weak_ref;
-
-			if (weak && !has_weak_ref) {
-				node->has_weak_ref = 1;
-				node->pending_weak_ref = 1;
-				node->local_weak_refs++;
-			}
-			if (strong && !has_strong_ref) {
-				node->has_strong_ref = 1;
-				node->pending_strong_ref = 1;
-				node->local_strong_refs++;
-			}
-			if (!strong && has_strong_ref)
-				node->has_strong_ref = 0;
-			if (!weak && has_weak_ref)
-				node->has_weak_ref = 0;
-			if (!weak && !strong) {
-				binder_debug(BINDER_DEBUG_INTERNAL_REFS,
-					     "%d:%d node %d u%016llx c%016llx deleted\n",
-					     proc->pid, thread->pid,
-					     node_debug_id,
-					     (u64)node_ptr,
-					     (u64)node_cookie);
-				rb_erase(&node->rb_node, &proc->nodes);
-				binder_inner_proc_unlock(proc);
-				binder_node_lock(node);
-				/*
-				 * Acquire the node lock before freeing the
-				 * node to serialize with other threads that
-				 * may have been holding the node lock while
-				 * decrementing this node (avoids race where
-				 * this thread frees while the other thread
-				 * is unlocking the node after the final
-				 * decrement)
-				 */
-				binder_node_unlock(node);
-				binder_free_node(node);
-			} else
-				binder_inner_proc_unlock(proc);
-
-			if (weak && !has_weak_ref)
-				ret = binder_put_node_cmd(
-						proc, thread, &ptr, node_ptr,
-						node_cookie, node_debug_id,
-						BR_INCREFS, "BR_INCREFS");
-			if (!ret && strong && !has_strong_ref)
-				ret = binder_put_node_cmd(
-						proc, thread, &ptr, node_ptr,
-						node_cookie, node_debug_id,
-						BR_ACQUIRE, "BR_ACQUIRE");
-			if (!ret && !strong && has_strong_ref)
-				ret = binder_put_node_cmd(
-						proc, thread, &ptr, node_ptr,
-						node_cookie, node_debug_id,
-						BR_RELEASE, "BR_RELEASE");
-			if (!ret && !weak && has_weak_ref)
-				ret = binder_put_node_cmd(
-						proc, thread, &ptr, node_ptr,
-						node_cookie, node_debug_id,
-						BR_DECREFS, "BR_DECREFS");
-			if (orig_ptr == ptr)
-				binder_debug(BINDER_DEBUG_INTERNAL_REFS,
-					     "%d:%d node %d u%016llx c%016llx state unchanged\n",
-					     proc->pid, thread->pid,
-					     node_debug_id,
-					     (u64)node_ptr,
-					     (u64)node_cookie);
-			if (ret)
-				return ret;
-		} break;
-		case BINDER_WORK_DEAD_BINDER:
-		case BINDER_WORK_DEAD_BINDER_AND_CLEAR:
-		case BINDER_WORK_CLEAR_DEATH_NOTIFICATION: {
-			struct binder_ref_death *death;
-			uint32_t cmd;
-			binder_uintptr_t cookie;
-
-			death = container_of(w, struct binder_ref_death, work);
-			if (w->type == BINDER_WORK_CLEAR_DEATH_NOTIFICATION)
-				cmd = BR_CLEAR_DEATH_NOTIFICATION_DONE;
-			else
-				cmd = BR_DEAD_BINDER;
-			cookie = death->cookie;
-
-			binder_debug(BINDER_DEBUG_DEATH_NOTIFICATION,
-				     "%d:%d %s %016llx\n",
-				      proc->pid, thread->pid,
-				      cmd == BR_DEAD_BINDER ?
-				      "BR_DEAD_BINDER" :
-				      "BR_CLEAR_DEATH_NOTIFICATION_DONE",
-				      (u64)cookie);
-			if (w->type == BINDER_WORK_CLEAR_DEATH_NOTIFICATION) {
-				binder_inner_proc_unlock(proc);
-				kfree(death);
-				binder_stats_deleted(BINDER_STAT_DEATH);
-			} else {
-				binder_enqueue_work_ilocked(
-						w, &proc->delivered_death);
-				binder_inner_proc_unlock(proc);
-			}
-			if (put_user(cmd, (uint32_t __user *)ptr))
-				return -EFAULT;
-			ptr += sizeof(uint32_t);
-			if (put_user(cookie,
-				     (binder_uintptr_t __user *)ptr))
-				return -EFAULT;
-			ptr += sizeof(binder_uintptr_t);
-			binder_stat_br(proc, thread, cmd);
-			if (cmd == BR_DEAD_BINDER)
-				goto done; /* DEAD_BINDER notifications can cause transactions */
-		} break;
-		}
-
-		if (!t)
-			continue;
-
-		BUG_ON(t->buffer == NULL);
-		if (t->buffer->target_node) {
-			struct binder_node *target_node = t->buffer->target_node;
-			struct binder_priority node_prio;
-
-			trd->target.ptr = target_node->ptr;
-			trd->cookie =  target_node->cookie;
-			node_prio.sched_policy = target_node->sched_policy;
-			node_prio.prio = target_node->min_priority;
-			binder_transaction_priority(current, t, node_prio,
-						    target_node->inherit_rt);
-			cmd = BR_TRANSACTION;
-		} else {
-			trd->target.ptr = 0;
-			trd->cookie = 0;
-			cmd = BR_REPLY;
-		}
-		trd->code = t->code;
-		trd->flags = t->flags;
-		trd->sender_euid = from_kuid(current_user_ns(), t->sender_euid);
-
-		t_from = binder_get_txn_from(t);
-		if (t_from) {
-			struct task_struct *sender = t_from->proc->tsk;
-
-			trd->sender_pid =
-				task_tgid_nr_ns(sender,
-						task_active_pid_ns(current));
-		} else {
-			trd->sender_pid = 0;
-		}
-
-		trd->data_size = t->buffer->data_size;
-		trd->offsets_size = t->buffer->offsets_size;
-		trd->data.ptr.buffer = (uintptr_t)t->buffer->user_data;
-		trd->data.ptr.offsets = trd->data.ptr.buffer +
-					ALIGN(t->buffer->data_size,
-					    sizeof(void *));
-
-		tr.secctx = t->security_ctx;
-		if (t->security_ctx) {
-			cmd = BR_TRANSACTION_SEC_CTX;
-			trsize = sizeof(tr);
-		}
-		if (put_user(cmd, (uint32_t __user *)ptr)) {
-			if (t_from)
-				binder_thread_dec_tmpref(t_from);
-
-			binder_cleanup_transaction(t, "put_user failed",
-						   BR_FAILED_REPLY);
-
-			return -EFAULT;
-		}
-		ptr += sizeof(uint32_t);
-		if (copy_to_user(ptr, &tr, trsize)) {
-			if (t_from)
-				binder_thread_dec_tmpref(t_from);
-
-			binder_cleanup_transaction(t, "copy_to_user failed",
-						   BR_FAILED_REPLY);
-
-			return -EFAULT;
-		}
-		ptr += trsize;
-
-		trace_binder_transaction_received(t);
-		binder_stat_br(proc, thread, cmd);
-		binder_debug(BINDER_DEBUG_TRANSACTION,
-			     "%d:%d %s %d %d:%d, cmd %d size %zd-%zd ptr %016llx-%016llx\n",
-			     proc->pid, thread->pid,
-			     (cmd == BR_TRANSACTION) ? "BR_TRANSACTION" :
-				(cmd == BR_TRANSACTION_SEC_CTX) ?
-				     "BR_TRANSACTION_SEC_CTX" : "BR_REPLY",
-			     t->debug_id, t_from ? t_from->proc->pid : 0,
-			     t_from ? t_from->pid : 0, cmd,
-			     t->buffer->data_size, t->buffer->offsets_size,
-			     (u64)trd->data.ptr.buffer,
-			     (u64)trd->data.ptr.offsets);
-
-		if (t_from)
-			binder_thread_dec_tmpref(t_from);
-		t->buffer->allow_user_free = 1;
-		if (cmd != BR_REPLY && !(t->flags & TF_ONE_WAY)) {
-			binder_inner_proc_lock(thread->proc);
-			t->to_parent = thread->transaction_stack;
-			t->to_thread = thread;
-			thread->transaction_stack = t;
-			binder_inner_proc_unlock(thread->proc);
-		} else {
-			binder_free_transaction(t);
-		}
-		break;
-	}
-
-done:
-
-	*consumed = ptr - buffer;
-	binder_inner_proc_lock(proc);
-	if (proc->requested_threads == 0 &&
-	    list_empty(&thread->proc->waiting_threads) &&
-	    proc->requested_threads_started < proc->max_threads &&
-	    (thread->looper & (BINDER_LOOPER_STATE_REGISTERED |
-	     BINDER_LOOPER_STATE_ENTERED)) /* the user-space code fails to */
-	     /*spawn a new thread if we leave this out */) {
-		proc->requested_threads++;
-		binder_inner_proc_unlock(proc);
-		binder_debug(BINDER_DEBUG_THREADS,
-			     "%d:%d BR_SPAWN_LOOPER\n",
-			     proc->pid, thread->pid);
-		if (put_user(BR_SPAWN_LOOPER, (uint32_t __user *)buffer))
-			return -EFAULT;
-		binder_stat_br(proc, thread, BR_SPAWN_LOOPER);
-	} else
-		binder_inner_proc_unlock(proc);
-	return 0;
-}
-
-```
-
-
-Server 端发起服务注册请求的代码：
-
-```c
-int main(int argc, char **argv)
-{
-    struct binder_state *bs;
-    uint32_t svcmgr = BINDER_SERVICE_MANAGER;
-    uint32_t handle;
-	int ret;
-
-    //打开驱动
-    bs = binder_open("/dev/binder", 128*1024);
-    if (!bs) {
-        fprintf(stderr, "failed to open binder driver\n");
-        return -1;
-    }
-
-	//添加服务
-	ret = svcmgr_publish(bs, svcmgr, "hello", hello_service_handler);
-    if (ret) {
-        fprintf(stderr, "failed to publish hello service\n");
-        return -1;
-    }
-  
-    binder_loop(bs, test_server_handler);
-
-    return 0;
-}
-
-
-int svcmgr_publish(struct binder_state *bs, uint32_t target, const char *name, void *ptr)
-{
-    int status;
-    unsigned iodata[512/4];
-    struct binder_io msg, reply;
-
-    bio_init(&msg, iodata, sizeof(iodata), 4);
-    bio_put_uint32(&msg, 0);  // strict mode header
-    bio_put_uint32(&msg, 0);
-    bio_put_string16_x(&msg, SVC_MGR_NAME);
-    bio_put_string16_x(&msg, name);
-    bio_put_obj(&msg, ptr);
-    bio_put_uint32(&msg, 0);
-    bio_put_uint32(&msg, 0);
-
-    //通过 binder_call 发起远程函数调用
-    if (binder_call(bs, &msg, &reply, target, SVC_MGR_ADD_SERVICE)) {
-        //fprintf(stderr, "svcmgr_public 远程调用失败\n");
-        return -1;
-    }
-  
-    //解析返回值
-    status = bio_get_uint32(&reply); //调用成功返回0
-    //远程调用结束，通知驱动清理内存
-    binder_done(bs, &msg, &reply);
-
-    return status;
-}
-
-int binder_call(struct binder_state *bs,
-                struct binder_io *msg, struct binder_io *reply,
-                uint32_t target, uint32_t code)
-{
-    int res;
-
-    //关注点1 binder_io *msg 转为 binder_write_read
-    //声明数据
-    struct binder_write_read bwr;
-
-    //binder_write_read 内部成员 write_buffer 的结构
-    struct {
-        uint32_t cmd;
-        struct binder_transaction_data txn;
-    } __attribute__((packed)) writebuf;
-  
-    unsigned readbuf[32];
-
-    //...... 省略非核心代码
-
-    //构造 binder_write_read 内部结构 writebuf
-    // BC_TRANSACTION 表示当前数据是用于发起远程调用
-    writebuf.cmd = BC_TRANSACTION;
-    // target 用于找到远程进程，即我们要调用哪个进程的函数
-    writebuf.txn.target.handle = target;
-    // code 表示调用哪个函数
-    writebuf.txn.code = code;
-    writebuf.txn.flags = 0;
-    writebuf.txn.data_size = msg->data - msg->data0;
-    writebuf.txn.offsets_size = ((char*) msg->offs) - ((char*) msg->offs0);
-    //data 是数据区，指向一个 binder_io 结构体
-    writebuf.txn.data.ptr.buffer = (uintptr_t)msg->data0;
-    writebuf.txn.data.ptr.offsets = (uintptr_t)msg->offs0;
-
-    //给 write 相关变量赋值
-    //表示当前进程是写入数据，即发送数据
-    bwr.write_size = sizeof(writebuf);
-    bwr.write_consumed = 0;
-    bwr.write_buffer = (uintptr_t) &writebuf;
-
-    hexdump(msg->data0, msg->data - msg->data0);
-    for (;;) {
-        //关注点2 写的同时也要读数据
-        //给 read 相关变量赋值
-        //同时，我们也要读取返回的结果值
-        bwr.read_size = sizeof(readbuf);
-        bwr.read_consumed = 0;
-        bwr.read_buffer = (uintptr_t) readbuf;
-
-        //关注点3 发起读写操作
-        //发送 binder_write_read 数据
-        res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
-
-        if (res < 0) {
-            fprintf(stderr,"binder: ioctl failed (%s)\n", strerror(errno));
-            goto fail;
-        }
-
-        //省略部分代码 ......
-        //关注点4 解析收到的数据 readbuf
-        // res = binder_parse(bs, reply, (uintptr_t) readbuf, bwr.read_consumed, 0);
-        // if (res == 0) return 0;
-        // if (res < 0) goto fail;
-    }
-
-fail:
-    memset(reply, 0, sizeof(*reply));
-    reply->flags |= BIO_F_IOERROR;
-    return -1;
-}
-```
-
-内核部分
-
-```c
-static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	int ret;
-	struct binder_proc *proc = filp->private_data;
-	struct binder_thread *thread;
-	unsigned int size = _IOC_SIZE(cmd);
-	void __user *ubuf = (void __user *)arg;
-
-	/*pr_info("binder_ioctl: %d:%d %x %lx\n",
-			proc->pid, current->pid, cmd, arg);*/
-
-	binder_selftest_alloc(&proc->alloc);
-
-	trace_binder_ioctl(cmd, arg);
-
-	ret = wait_event_interruptible(binder_user_error_wait, binder_stop_on_user_error < 2);
-	if (ret)
-		goto err_unlocked;
-
-	thread = binder_get_thread(proc);
-	if (thread == NULL) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	switch (cmd) {
-	case BINDER_WRITE_READ:
-		ret = binder_ioctl_write_read(filp, cmd, arg, thread);
-		if (ret)
-			goto err;
-		break;
 	//......
-	//省略不相关 case
-	default:
-		ret = -EINVAL;
-		goto err;
-	}
-	ret = 0;
-err:
-	if (thread)
-		thread->looper_need_return = false;
-	wait_event_interruptible(binder_user_error_wait, binder_stop_on_user_error < 2);
-	if (ret && ret != -ERESTARTSYS)
-		pr_info("%d:%d ioctl %x %lx returned %d\n", proc->pid, current->pid, cmd, arg, ret);
-err_unlocked:
-	trace_binder_ioctl_done(ret);
-	return ret;
 }
 
-static int binder_ioctl_write_read(struct file *filp,
-				unsigned int cmd, unsigned long arg,
-				struct binder_thread *thread)
+static int binder_wait_for_work(struct binder_thread *thread,
+				bool do_proc_work)
 {
+	//定义一个等待队列项
+	DEFINE_WAIT(wait);
+	struct binder_proc *proc = thread->proc;
 	int ret = 0;
-	struct binder_proc *proc = filp->private_data;
-	unsigned int size = _IOC_SIZE(cmd);
-	void __user *ubuf = (void __user *)arg;
-	struct binder_write_read bwr;
 
-	if (size != sizeof(struct binder_write_read)) {
-		ret = -EINVAL;
-		goto out;
-	}
-	if (copy_from_user(&bwr, ubuf, sizeof(bwr))) {
-		ret = -EFAULT;
-		goto out;
-	}
-	binder_debug(BINDER_DEBUG_READ_WRITE,
-		     "%d:%d write %lld at %016llx, read %lld at %016llx\n",
-		     proc->pid, thread->pid,
-		     (u64)bwr.write_size, (u64)bwr.write_buffer,
-		     (u64)bwr.read_size, (u64)bwr.read_buffer);
-
-	if (bwr.write_size > 0) {
-		ret = binder_thread_write(proc, thread,
-					  bwr.write_buffer,
-					  bwr.write_size,
-					  &bwr.write_consumed);
-		trace_binder_write_done(ret);
-		if (ret < 0) {
-			bwr.read_consumed = 0;
-			if (copy_to_user(ubuf, &bwr, sizeof(bwr)))
-				ret = -EFAULT;
-			goto out;
-		}
-	}
-	if (bwr.read_size > 0) {
-		ret = binder_thread_read(proc, thread, bwr.read_buffer,
-					 bwr.read_size,
-					 &bwr.read_consumed,
-					 filp->f_flags & O_NONBLOCK);
-		trace_binder_read_done(ret);
-		binder_inner_proc_lock(proc);
-		if (!binder_worklist_empty_ilocked(&proc->todo))
-			binder_wakeup_proc_ilocked(proc);
+	freezer_do_not_count();
+	binder_inner_proc_lock(proc);
+	for (;;) {
+		//准备睡眠等待
+		prepare_to_wait(&thread->wait, &wait, TASK_INTERRUPTIBLE);
+		if (binder_has_work_ilocked(thread, do_proc_work))
+			break;
+		if (do_proc_work)
+			list_add(&thread->waiting_thread_node,
+				 &proc->waiting_threads);
 		binder_inner_proc_unlock(proc);
-		if (ret < 0) {
-			if (copy_to_user(ubuf, &bwr, sizeof(bwr)))
-				ret = -EFAULT;
-			goto out;
-		}
-	}
-	binder_debug(BINDER_DEBUG_READ_WRITE,
-		     "%d:%d wrote %lld of %lld, read return %lld of %lld\n",
-		     proc->pid, thread->pid,
-		     (u64)bwr.write_consumed, (u64)bwr.write_size,
-		     (u64)bwr.read_consumed, (u64)bwr.read_size);
-	if (copy_to_user(ubuf, &bwr, sizeof(bwr))) {
-		ret = -EFAULT;
-		goto out;
-	}
-out:
-	return ret;
-}
-
-static int binder_thread_write(struct binder_proc *proc,
-			struct binder_thread *thread,
-			binder_uintptr_t binder_buffer, size_t size,
-			binder_size_t *consumed)
-{
-	uint32_t cmd;
-	struct binder_context *context = proc->context;
-	void __user *buffer = (void __user *)(uintptr_t)binder_buffer;
-	void __user *ptr = buffer + *consumed;
-	void __user *end = buffer + size;
-
-	while (ptr < end && thread->return_error.cmd == BR_OK) {
-		int ret;
-
-		if (get_user(cmd, (uint32_t __user *)ptr))
-			return -EFAULT;
-		ptr += sizeof(uint32_t);
-		trace_binder_command(cmd);
-		if (_IOC_NR(cmd) < ARRAY_SIZE(binder_stats.bc)) {
-			atomic_inc(&binder_stats.bc[_IOC_NR(cmd)]);
-			atomic_inc(&proc->stats.bc[_IOC_NR(cmd)]);
-			atomic_inc(&thread->stats.bc[_IOC_NR(cmd)]);
-		}
-		switch (cmd) {
-        //省略不相关 case
-		//。。。。。。
-		case BC_TRANSACTION:
-		case BC_REPLY: {
-			struct binder_transaction_data tr;
-
-			if (copy_from_user(&tr, ptr, sizeof(tr)))
-				return -EFAULT;
-			ptr += sizeof(tr);
-			binder_transaction(proc, thread, &tr,
-					   cmd == BC_REPLY, 0);
+		schedule(); //发起进程调度，进程进入休眠
+		binder_inner_proc_lock(proc);
+		list_del_init(&thread->waiting_thread_node);
+		if (signal_pending(current)) {
+			ret = -ERESTARTSYS;
 			break;
 		}
-
-		//省略不相关 case
-		//。。。。。。
-		default:
-			pr_err("%d:%d unknown command %d\n",
-			       proc->pid, thread->pid, cmd);
-			return -EINVAL;
-		}
-		*consumed = ptr - buffer;
 	}
-	return 0;
+	finish_wait(&thread->wait, &wait);
+	binder_inner_proc_unlock(proc);
+	freezer_count();
+
+	return ret;
 }
-
-static void binder_transaction(struct binder_proc *proc,
-			       struct binder_thread *thread,
-			       struct binder_transaction_data *tr, int reply,
-			       binder_size_t extra_buffers_size)
-{
-	int ret;
-	struct binder_transaction *t;
-	struct binder_work *tcomplete;
-	binder_size_t buffer_offset = 0;
-	binder_size_t off_start_offset, off_end_offset;
-	binder_size_t off_min;
-	binder_size_t sg_buf_offset, sg_buf_end_offset;
-	struct binder_proc *target_proc = NULL;
-	struct binder_thread *target_thread = NULL;
-	struct binder_node *target_node = NULL;
-	struct binder_transaction *in_reply_to = NULL;
-	struct binder_transaction_log_entry *e;
-	uint32_t return_error = 0;
-	uint32_t return_error_param = 0;
-	uint32_t return_error_line = 0;
-	binder_size_t last_fixup_obj_off = 0;
-	binder_size_t last_fixup_min_off = 0;
-	struct binder_context *context = proc->context;
-	int t_debug_id = atomic_inc_return(&binder_last_id);
-	char *secctx = NULL;
-	u32 secctx_sz = 0;
-
-	e = binder_transaction_log_add(&binder_transaction_log);
-	e->debug_id = t_debug_id;
-	e->call_type = reply ? 2 : !!(tr->flags & TF_ONE_WAY);
-	e->from_proc = proc->pid;
-	e->from_thread = thread->pid;
-	e->target_handle = tr->target.handle;
-	e->data_size = tr->data_size;
-	e->offsets_size = tr->offsets_size;
-	e->context_name = proc->context->name;
-
-	if (reply) {
-			//省略不相关代码
-	} else {
-		if (tr->target.handle) {
-			//省略不相关代码
-		} else { //找到目标 进程/线程 对应的 binder_node
-			mutex_lock(&context->context_mgr_node_lock);
-			//获得 ServiceManager 的 binder_node 结构体
-			target_node = context->binder_context_mgr_node;
-			if (target_node)
-				//从 target_node 得到 target_proc 
-				target_node = binder_get_node_refs_for_txn(
-						target_node, &target_proc,
-						&return_error);
-			else
-				return_error = BR_DEAD_REPLY;
-			mutex_unlock(&context->context_mgr_node_lock);
-			if (target_node && target_proc == proc) {
-				binder_user_error("%d:%d got transaction to context manager from process owning it\n",
-						  proc->pid, thread->pid);
-				return_error = BR_FAILED_REPLY;
-				return_error_param = -EINVAL;
-				return_error_line = __LINE__;
-				goto err_invalid_target_handle;
-			}
-		}
-		if (!target_node) {
-			/*
-			 * return_error is set above
-			 */
-			return_error_param = -EINVAL;
-			return_error_line = __LINE__;
-			goto err_dead_binder;
-		}
-		e->to_node = target_node->debug_id;
-		if (security_binder_transaction(proc->tsk,
-						target_proc->tsk) < 0) {
-			return_error = BR_FAILED_REPLY;
-			return_error_param = -EPERM;
-			return_error_line = __LINE__;
-			goto err_invalid_target_handle;
-		}
-		binder_inner_proc_lock(proc);
-		if (!(tr->flags & TF_ONE_WAY) && thread->transaction_stack) {
-			//省略不相关代码
-		}
-		binder_inner_proc_unlock(proc);
-	}
-	if (target_thread)
-		e->to_thread = target_thread->pid;
-	e->to_proc = target_proc->pid;
-
-	/* TODO: reuse incoming transaction for reply */
-	//struct binder_transaction *t;
-	t = kzalloc(sizeof(*t), GFP_KERNEL);
-	if (t == NULL) {
-		return_error = BR_FAILED_REPLY;
-		return_error_param = -ENOMEM;
-		return_error_line = __LINE__;
-		goto err_alloc_t_failed;
-	}
-	binder_stats_created(BINDER_STAT_TRANSACTION);
-	spin_lock_init(&t->lock);
-
-	//struct binder_work *tcomplete;
-	tcomplete = kzalloc(sizeof(*tcomplete), GFP_KERNEL);
-	if (tcomplete == NULL) {
-		return_error = BR_FAILED_REPLY;
-		return_error_param = -ENOMEM;
-		return_error_line = __LINE__;
-		goto err_alloc_tcomplete_failed;
-	}
-	binder_stats_created(BINDER_STAT_TRANSACTION_COMPLETE);
-
-	t->debug_id = t_debug_id;
-
-	if (!reply && !(tr->flags & TF_ONE_WAY))
-		//rpc 发起方
-		t->from = thread;
-	else
-		t->from = NULL;
-	t->sender_euid = task_euid(proc->tsk);
-	//rpc 接受方
-	t->to_proc = target_proc;
-	t->to_thread = target_thread;
-	t->code = tr->code;
-	t->flags = tr->flags;
-	if (!(t->flags & TF_ONE_WAY) &&
-	    binder_supported_policy(current->policy)) {
-		/* Inherit supported policies for synchronous transactions */
-		t->priority.sched_policy = current->policy;
-		t->priority.prio = current->normal_prio;
-	} else {
-		/* Otherwise, fall back to the default priority */
-		t->priority = target_proc->default_priority;
-	}
-
-	if (target_node && target_node->txn_security_ctx) {
-		u32 secid;
-
-		security_task_getsecid(proc->tsk, &secid);
-		ret = security_secid_to_secctx(secid, &secctx, &secctx_sz);
-		if (ret) {
-			return_error = BR_FAILED_REPLY;
-			return_error_param = ret;
-			return_error_line = __LINE__;
-			goto err_get_secctx_failed;
-		}
-		extra_buffers_size += ALIGN(secctx_sz, sizeof(u64));
-	}
-
-	trace_binder_transaction(reply, t, target_node);
-
-	//分配内存并完成映射
-	t->buffer = binder_alloc_new_buf(&target_proc->alloc, tr->data_size,
-		tr->offsets_size, extra_buffers_size,
-		!reply && (t->flags & TF_ONE_WAY));
-	if (IS_ERR(t->buffer)) {
-		/*
-		 * -ESRCH indicates VMA cleared. The target is dying.
-		 */
-		return_error_param = PTR_ERR(t->buffer);
-		return_error = return_error_param == -ESRCH ?
-			BR_DEAD_REPLY : BR_FAILED_REPLY;
-		return_error_line = __LINE__;
-		t->buffer = NULL;
-		goto err_binder_alloc_buf_failed;
-	}
-	if (secctx) {
-		size_t buf_offset = ALIGN(tr->data_size, sizeof(void *)) +
-				    ALIGN(tr->offsets_size, sizeof(void *)) +
-				    ALIGN(extra_buffers_size, sizeof(void *)) -
-				    ALIGN(secctx_sz, sizeof(u64));
-
-		t->security_ctx = (uintptr_t)t->buffer->user_data + buf_offset;
-		binder_alloc_copy_to_buffer(&target_proc->alloc,
-					    t->buffer, buf_offset,
-					    secctx, secctx_sz);
-		security_release_secctx(secctx, secctx_sz);
-		secctx = NULL;
-	}
-	t->buffer->debug_id = t->debug_id;
-	t->buffer->transaction = t;
-	t->buffer->target_node = target_node;
-	trace_binder_transaction_alloc_buf(t->buffer);
-
-	if (binder_alloc_copy_user_to_buffer(
-				&target_proc->alloc,
-				t->buffer, 0,
-				(const void __user *)
-					(uintptr_t)tr->data.ptr.buffer,
-				tr->data_size)) {
-		binder_user_error("%d:%d got transaction with invalid data ptr\n",
-				proc->pid, thread->pid);
-		return_error = BR_FAILED_REPLY;
-		return_error_param = -EFAULT;
-		return_error_line = __LINE__;
-		goto err_copy_data_failed;
-	}
-	if (binder_alloc_copy_user_to_buffer(
-				&target_proc->alloc,
-				t->buffer,
-				ALIGN(tr->data_size, sizeof(void *)),
-				(const void __user *)
-					(uintptr_t)tr->data.ptr.offsets,
-				tr->offsets_size)) {
-		binder_user_error("%d:%d got transaction with invalid offsets ptr\n",
-				proc->pid, thread->pid);
-		return_error = BR_FAILED_REPLY;
-		return_error_param = -EFAULT;
-		return_error_line = __LINE__;
-		goto err_copy_data_failed;
-	}
-	if (!IS_ALIGNED(tr->offsets_size, sizeof(binder_size_t))) {
-		binder_user_error("%d:%d got transaction with invalid offsets size, %lld\n",
-				proc->pid, thread->pid, (u64)tr->offsets_size);
-		return_error = BR_FAILED_REPLY;
-		return_error_param = -EINVAL;
-		return_error_line = __LINE__;
-		goto err_bad_offset;
-	}
-	if (!IS_ALIGNED(extra_buffers_size, sizeof(u64))) {
-		binder_user_error("%d:%d got transaction with unaligned buffers size, %lld\n",
-				  proc->pid, thread->pid,
-				  (u64)extra_buffers_size);
-		return_error = BR_FAILED_REPLY;
-		return_error_param = -EINVAL;
-		return_error_line = __LINE__;
-		goto err_bad_offset;
-	}
-	off_start_offset = ALIGN(tr->data_size, sizeof(void *));
-	buffer_offset = off_start_offset;
-	off_end_offset = off_start_offset + tr->offsets_size;
-	sg_buf_offset = ALIGN(off_end_offset, sizeof(void *));
-	sg_buf_end_offset = sg_buf_offset + extra_buffers_size;
-	off_min = 0;
-	for (buffer_offset = off_start_offset; buffer_offset < off_end_offset;
-	     buffer_offset += sizeof(binder_size_t)) {
-		struct binder_object_header *hdr;
-		size_t object_size;
-		struct binder_object object;
-		binder_size_t object_offset;
-
-		binder_alloc_copy_from_buffer(&target_proc->alloc,
-					      &object_offset,
-					      t->buffer,
-					      buffer_offset,
-					      sizeof(object_offset));
-		object_size = binder_get_object(target_proc, t->buffer,
-						object_offset, &object);
-		if (object_size == 0 || object_offset < off_min) {
-			binder_user_error("%d:%d got transaction with invalid offset (%lld, min %lld max %lld) or object.\n",
-					  proc->pid, thread->pid,
-					  (u64)object_offset,
-					  (u64)off_min,
-					  (u64)t->buffer->data_size);
-			return_error = BR_FAILED_REPLY;
-			return_error_param = -EINVAL;
-			return_error_line = __LINE__;
-			goto err_bad_offset;
-		}
-
-		hdr = &object.hdr;
-		off_min = object_offset + object_size;
-		switch (hdr->type) {
-		case BINDER_TYPE_BINDER:
-		case BINDER_TYPE_WEAK_BINDER: {
-			struct flat_binder_object *fp;
-
-			fp = to_flat_binder_object(hdr);
-			ret = binder_translate_binder(fp, t, thread);
-			if (ret < 0) {
-				return_error = BR_FAILED_REPLY;
-				return_error_param = ret;
-				return_error_line = __LINE__;
-				goto err_translate_failed;
-			}
-			binder_alloc_copy_to_buffer(&target_proc->alloc,
-						    t->buffer, object_offset,
-						    fp, sizeof(*fp));
-		} break;
-		case BINDER_TYPE_HANDLE:
-		case BINDER_TYPE_WEAK_HANDLE: {
-			struct flat_binder_object *fp;
-
-			fp = to_flat_binder_object(hdr);
-			ret = binder_translate_handle(fp, t, thread);
-			if (ret < 0) {
-				return_error = BR_FAILED_REPLY;
-				return_error_param = ret;
-				return_error_line = __LINE__;
-				goto err_translate_failed;
-			}
-			binder_alloc_copy_to_buffer(&target_proc->alloc,
-						    t->buffer, object_offset,
-						    fp, sizeof(*fp));
-		} break;
-
-		case BINDER_TYPE_FD: {
-			struct binder_fd_object *fp = to_binder_fd_object(hdr);
-			int target_fd = binder_translate_fd(fp->fd, t, thread,
-							    in_reply_to);
-
-			if (target_fd < 0) {
-				return_error = BR_FAILED_REPLY;
-				return_error_param = target_fd;
-				return_error_line = __LINE__;
-				goto err_translate_failed;
-			}
-			fp->pad_binder = 0;
-			fp->fd = target_fd;
-			binder_alloc_copy_to_buffer(&target_proc->alloc,
-						    t->buffer, object_offset,
-						    fp, sizeof(*fp));
-		} break;
-		case BINDER_TYPE_FDA: {
-			struct binder_object ptr_object;
-			binder_size_t parent_offset;
-			struct binder_fd_array_object *fda =
-				to_binder_fd_array_object(hdr);
-			size_t num_valid = (buffer_offset - off_start_offset) *
-						sizeof(binder_size_t);
-			struct binder_buffer_object *parent =
-				binder_validate_ptr(target_proc, t->buffer,
-						    &ptr_object, fda->parent,
-						    off_start_offset,
-						    &parent_offset,
-						    num_valid);
-			if (!parent) {
-				binder_user_error("%d:%d got transaction with invalid parent offset or type\n",
-						  proc->pid, thread->pid);
-				return_error = BR_FAILED_REPLY;
-				return_error_param = -EINVAL;
-				return_error_line = __LINE__;
-				goto err_bad_parent;
-			}
-			if (!binder_validate_fixup(target_proc, t->buffer,
-						   off_start_offset,
-						   parent_offset,
-						   fda->parent_offset,
-						   last_fixup_obj_off,
-						   last_fixup_min_off)) {
-				binder_user_error("%d:%d got transaction with out-of-order buffer fixup\n",
-						  proc->pid, thread->pid);
-				return_error = BR_FAILED_REPLY;
-				return_error_param = -EINVAL;
-				return_error_line = __LINE__;
-				goto err_bad_parent;
-			}
-			ret = binder_translate_fd_array(fda, parent, t, thread,
-							in_reply_to);
-			if (ret < 0) {
-				return_error = BR_FAILED_REPLY;
-				return_error_param = ret;
-				return_error_line = __LINE__;
-				goto err_translate_failed;
-			}
-			last_fixup_obj_off = parent_offset;
-			last_fixup_min_off =
-				fda->parent_offset + sizeof(u32) * fda->num_fds;
-		} break;
-		case BINDER_TYPE_PTR: {
-			struct binder_buffer_object *bp =
-				to_binder_buffer_object(hdr);
-			size_t buf_left = sg_buf_end_offset - sg_buf_offset;
-			size_t num_valid;
-
-			if (bp->length > buf_left) {
-				binder_user_error("%d:%d got transaction with too large buffer\n",
-						  proc->pid, thread->pid);
-				return_error = BR_FAILED_REPLY;
-				return_error_param = -EINVAL;
-				return_error_line = __LINE__;
-				goto err_bad_offset;
-			}
-			if (binder_alloc_copy_user_to_buffer(
-						&target_proc->alloc,
-						t->buffer,
-						sg_buf_offset,
-						(const void __user *)
-							(uintptr_t)bp->buffer,
-						bp->length)) {
-				binder_user_error("%d:%d got transaction with invalid offsets ptr\n",
-						  proc->pid, thread->pid);
-				return_error_param = -EFAULT;
-				return_error = BR_FAILED_REPLY;
-				return_error_line = __LINE__;
-				goto err_copy_data_failed;
-			}
-			/* Fixup buffer pointer to target proc address space */
-			bp->buffer = (uintptr_t)
-				t->buffer->user_data + sg_buf_offset;
-			sg_buf_offset += ALIGN(bp->length, sizeof(u64));
-
-			num_valid = (buffer_offset - off_start_offset) *
-					sizeof(binder_size_t);
-			ret = binder_fixup_parent(t, thread, bp,
-						  off_start_offset,
-						  num_valid,
-						  last_fixup_obj_off,
-						  last_fixup_min_off);
-			if (ret < 0) {
-				return_error = BR_FAILED_REPLY;
-				return_error_param = ret;
-				return_error_line = __LINE__;
-				goto err_translate_failed;
-			}
-			binder_alloc_copy_to_buffer(&target_proc->alloc,
-						    t->buffer, object_offset,
-						    bp, sizeof(*bp));
-			last_fixup_obj_off = object_offset;
-			last_fixup_min_off = 0;
-		} break;
-		default:
-			binder_user_error("%d:%d got transaction with invalid object type, %x\n",
-				proc->pid, thread->pid, hdr->type);
-			return_error = BR_FAILED_REPLY;
-			return_error_param = -EINVAL;
-			return_error_line = __LINE__;
-			goto err_bad_object_type;
-		}
-	}
-	tcomplete->type = BINDER_WORK_TRANSACTION_COMPLETE;
-	t->work.type = BINDER_WORK_TRANSACTION;
-
-	if (reply) {
-		binder_enqueue_thread_work(thread, tcomplete);
-		binder_inner_proc_lock(target_proc);
-		if (target_thread->is_dead) {
-			binder_inner_proc_unlock(target_proc);
-			goto err_dead_proc_or_thread;
-		}
-		BUG_ON(t->buffer->async_transaction != 0);
-		binder_pop_transaction_ilocked(target_thread, in_reply_to);
-		binder_enqueue_thread_work_ilocked(target_thread, &t->work);
-		binder_inner_proc_unlock(target_proc);
-		wake_up_interruptible_sync(&target_thread->wait);
-		binder_restore_priority(current, in_reply_to->saved_priority);
-		binder_free_transaction(in_reply_to);
-	} else if (!(t->flags & TF_ONE_WAY)) {
-		BUG_ON(t->buffer->async_transaction != 0);
-		binder_inner_proc_lock(proc);
-		/*
-		 * Defer the TRANSACTION_COMPLETE, so we don't return to
-		 * userspace immediately; this allows the target process to
-		 * immediately start processing this transaction, reducing
-		 * latency. We will then return the TRANSACTION_COMPLETE when
-		 * the target replies (or there is an error).
-		 */
-		binder_enqueue_deferred_thread_work_ilocked(thread, tcomplete);
-		t->need_reply = 1;
-		t->from_parent = thread->transaction_stack;
-		thread->transaction_stack = t;
-		binder_inner_proc_unlock(proc);
-		if (!binder_proc_transaction(t, target_proc, target_thread)) {
-			binder_inner_proc_lock(proc);
-			binder_pop_transaction_ilocked(thread, t);
-			binder_inner_proc_unlock(proc);
-			goto err_dead_proc_or_thread;
-		}
-	} else {
-		BUG_ON(target_node == NULL);
-		BUG_ON(t->buffer->async_transaction != 1);
-		binder_enqueue_thread_work(thread, tcomplete);
-		if (!binder_proc_transaction(t, target_proc, NULL))
-			goto err_dead_proc_or_thread;
-	}
-	if (target_thread)
-		binder_thread_dec_tmpref(target_thread);
-	binder_proc_dec_tmpref(target_proc);
-	if (target_node)
-		binder_dec_node_tmpref(target_node);
-	/*
-	 * write barrier to synchronize with initialization
-	 * of log entry
-	 */
-	smp_wmb();
-	WRITE_ONCE(e->debug_id_done, t_debug_id);
-	return;
-
-err_dead_proc_or_thread:
-	return_error = BR_DEAD_REPLY;
-	return_error_line = __LINE__;
-	binder_dequeue_work(proc, tcomplete);
-err_translate_failed:
-err_bad_object_type:
-err_bad_offset:
-err_bad_parent:
-err_copy_data_failed:
-	trace_binder_transaction_failed_buffer_release(t->buffer);
-	binder_transaction_buffer_release(target_proc, t->buffer,
-					  buffer_offset, true);
-	if (target_node)
-		binder_dec_node_tmpref(target_node);
-	target_node = NULL;
-	t->buffer->transaction = NULL;
-	binder_alloc_free_buf(&target_proc->alloc, t->buffer);
-err_binder_alloc_buf_failed:
-	if (secctx)
-		security_release_secctx(secctx, secctx_sz);
-err_get_secctx_failed:
-	kfree(tcomplete);
-	binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
-err_alloc_tcomplete_failed:
-	kfree(t);
-	binder_stats_deleted(BINDER_STAT_TRANSACTION);
-err_alloc_t_failed:
-err_bad_call_stack:
-err_empty_call_stack:
-err_dead_binder:
-err_invalid_target_handle:
-	if (target_thread)
-		binder_thread_dec_tmpref(target_thread);
-	if (target_proc)
-		binder_proc_dec_tmpref(target_proc);
-	if (target_node) {
-		binder_dec_node(target_node, 1, 0);
-		binder_dec_node_tmpref(target_node);
-	}
-
-	binder_debug(BINDER_DEBUG_FAILED_TRANSACTION,
-		     "%d:%d transaction failed %d/%d, size %lld-%lld line %d\n",
-		     proc->pid, thread->pid, return_error, return_error_param,
-		     (u64)tr->data_size, (u64)tr->offsets_size,
-		     return_error_line);
-
-	{
-		struct binder_transaction_log_entry *fe;
-
-		e->return_error = return_error;
-		e->return_error_param = return_error_param;
-		e->return_error_line = return_error_line;
-		fe = binder_transaction_log_add(&binder_transaction_log_failed);
-		*fe = *e;
-		/*
-		 * write barrier to synchronize with initialization
-		 * of log entry
-		 */
-		smp_wmb();
-		WRITE_ONCE(e->debug_id_done, t_debug_id);
-		WRITE_ONCE(fe->debug_id_done, t_debug_id);
-	}
-
-	BUG_ON(thread->return_error.cmd != BR_OK);
-	if (in_reply_to) {
-		binder_restore_priority(current, in_reply_to->saved_priority);
-		thread->return_error.cmd = BR_TRANSACTION_COMPLETE;
-		binder_enqueue_thread_work(thread, &thread->return_error.work);
-		binder_send_failed_reply(in_reply_to, return_error);
-	} else {
-		thread->return_error.cmd = return_error;
-		binder_enqueue_thread_work(thread, &thread->return_error.work);
-	}
-}
-
-static struct binder_node *binder_get_node_refs_for_txn(
-		struct binder_node *node,
-		struct binder_proc **procp,
-		uint32_t *error)
-{
-	struct binder_node *target_node = NULL;
-
-	binder_node_inner_lock(node);
-	if (node->proc) {
-		target_node = node;
-		binder_inc_node_nilocked(node, 1, 0, NULL);
-		binder_inc_node_tmpref_ilocked(node);
-		node->proc->tmp_ref++;
-		*procp = node->proc;
-	} else
-		*error = BR_DEAD_REPLY;
-	binder_node_inner_unlock(node);
-
-	return target_node;
-}
-
-//分配物理内存，建立映射
-
-// t->buffer = binder_alloc_new_buf(&target_proc->alloc, tr->data_size,
-// 		tr->offsets_size, extra_buffers_size,
-// 		!reply && (t->flags & TF_ONE_WAY));
-static struct binder_buffer *binder_alloc_new_buf_locked(
-                struct binder_alloc *alloc,
-                size_t data_size,
-                size_t offsets_size,
-                size_t extra_buffers_size,
-                int is_async)
-{
-    struct rb_node *n = alloc->free_buffers.rb_node;
-    struct binder_buffer *buffer;
-    size_t buffer_size;
-    struct rb_node *best_fit = NULL;
-    void *has_page_addr;
-    void *end_page_addr;
-    size_t size, data_offsets_size;
-    int ret;
-
-    if (alloc->vma == NULL) {
-        ... //error
-    }
-
-    //计算需要的缓冲区大小
-    //这里需要将size对齐void *（32位下占用4字节，64位下占用8字节）
-    data_offsets_size = ALIGN(data_size, sizeof(void *)) +
-        ALIGN(offsets_size, sizeof(void *));
-    size = data_offsets_size + ALIGN(extra_buffers_size, sizeof(void *));
-    size = max(size, sizeof(void *));
-
-    //从binder_alloc的空闲缓冲红黑树中找到一个大小最合适的binder_buffer
-    while (n) {
-        //当找到一个需求大小和缓存区大小刚好相同的空闲缓存区时
-        //此时buffer就正好指向这个空闲缓存区
-        buffer = rb_entry(n, struct binder_buffer, rb_node);
-        BUG_ON(!buffer->free);
-        buffer_size = binder_alloc_buffer_size(alloc, buffer);
-
-        //当只找到一个比需求大小稍大一点的空闲缓存区时
-        //此时buffer指向的是这个空闲缓存区所在节点的父节点
-        //然后n指向NULL
-        if (size < buffer_size) {
-            best_fit = n;
-            n = n->rb_left;
-        } else if (size > buffer_size)
-            n = n->rb_right;
-        else {
-            best_fit = n;
-            break;
-        }
-    }
-    if (best_fit == NULL) {
-        ... //error
-    }
-    //此时buffer指向的是所需求的空闲缓存区所在红黑树节点的父节点
-    //需要让其指向真正需求的那个空闲缓存区
-    if (n == NULL) {
-        buffer = rb_entry(best_fit, struct binder_buffer, rb_node);
-        buffer_size = binder_alloc_buffer_size(alloc, buffer);
-    }
-
-    //计算出buffer的终点，向下对齐（不能超过可用的buffer_size）
-    has_page_addr =
-        (void *)(((uintptr_t)buffer->data + buffer_size) & PAGE_MASK);
-    WARN_ON(n && buffer_size != size);
-    //计算出实际上我们接收数据需要的空间的终点，向上映射
-    end_page_addr =
-        (void *)PAGE_ALIGN((uintptr_t)buffer->data + size);
-    //如果超出了可用的buffer_size，恢复到正常可用的结束地址
-    if (end_page_addr > has_page_addr)
-        end_page_addr = has_page_addr;
-    //分配物理页，建立映射
-    ret = binder_update_page_range(alloc, 1,
-        (void *)PAGE_ALIGN((uintptr_t)buffer->data), end_page_addr);
-    if (ret)
-        return ERR_PTR(ret);
-
-    //有空余空间的话，分隔这个buffer，剩余的buffer加入到空闲缓存区红黑树中（合理利用空间）
-    if (buffer_size != size) {
-        struct binder_buffer *new_buffer;
-
-        new_buffer = kzalloc(sizeof(*buffer), GFP_KERNEL);
-        new_buffer->data = (u8 *)buffer->data + size;
-        list_add(&new_buffer->entry, &buffer->entry);
-        new_buffer->free = 1;
-        binder_insert_free_buffer(alloc, new_buffer);
-    }
-
-    //我们已经使用了这个buffer，要将其从空闲缓存区红黑树中移除
-    rb_erase(best_fit, &alloc->free_buffers);
-    //标记为非空闲
-    buffer->free = 0;
-    buffer->allow_user_free = 0;
-    //插入到已分配缓存区红黑树中
-    binder_insert_allocated_buffer_locked(alloc, buffer);
-    buffer->data_size = data_size;
-    buffer->offsets_size = offsets_size;
-    buffer->async_transaction = is_async;
-    buffer->extra_buffers_size = extra_buffers_size;
-    //如果是异步事件, 那么更新binder_alloc的异步事件空闲buffer
-    if (is_async) {
-        alloc->free_async_space -= size + sizeof(struct binder_buffer);
-    }
-    return buffer;
-    ...
-}
-
-binder_alloc_copy_user_to_buffer(
-	&target_proc->alloc,
-	t->buffer, 
-	0,
-	(const void __user *)(uintptr_t)tr->data.ptr.buffertr->data_size))
-
-binder_alloc_copy_user_to_buffer(
-				&target_proc->alloc,
-				t->buffer,
-				ALIGN(tr->data_size, sizeof(void *)),
-				(const void __user *)(uintptr_t)tr->data.ptr.offsets,
-				tr->offsets_size))
 ```
 
-  
-## 2. Server 端服务注册过程分析
+这里涉及了 Linux 内核中进程调度相关的 API，这里简单介绍一下：
 
 
-## 3. Client 端服务请求与使用过程分析
+**DEFINE_WAIT**
+
+这是一个宏，它定义了一个 wait_queue_t 结构体
+
+```c
+#define DEFINE_WAIT_FUNC(name, function)				\
+	wait_queue_t name = {						\
+		.private	= current,				\
+		.func		= function,				\
+		.task_list	= LIST_HEAD_INIT((name).task_list),	\
+	}
+
+#define DEFINE_WAIT(name) DEFINE_WAIT_FUNC(name, autoremove_wake_function)
+```
+这个结构体中的private域指向的即是当前执行系统调用所在进程的描述结构体，func域指向唤醒这个队列项进程所执行的函数
+
+**prepare_to_wait**
+这个函数将我们刚刚定义的wait队列项加入到一个等待队列中（在binder中即是加入到thread->wait中），然后将进程的状态设置为我们指定的状态，在这里为TASK_INTERRUPTIBLE（可中断的睡眠状态）
+
+**schedule**
+schedule是真正执行进程调度的地方，由于之前进程状态已经被设置成TASK_INTERRUPTIBLE状态，在调用schedule后，该进程就会让出CPU，不再调度运行，直到该进程恢复TASK_RUNNING状态
+
+**wake_up_interruptible**
+这个函数会唤醒TASK_INTERRUPTIBLE状态下的进程，它会循环遍历等待队列中的每个元素，分别执行其唤醒函数，也就对应着我们DEFINE_WAIT定义出来的结构体中的func域，即autoremove_wake_function，它最终会调用try_to_wake_up函数将进程置为TASK_RUNNING状态，这样后面的进程调度便会调度到该进程，从而唤醒该进程继续执行
+
+**signal_pending**
+这个函数是用来检查当前系统调用进程是否有信号需要处理的，当一个进程陷入系统调用并处于等待状态时，如果此时产生了一个信号，仅仅是在该进程的thread_info中标识了一下，所以我们唤醒进程后需要检查一下是否有信号需要处理，如果有的话，返回-ERESTARTSYS，先处理信号，后续Linux上层库函数会根据-ERESTARTSYS此返回值重新执行这个系统调用
+
+**finish_wait**
+最后一步，当进程被唤醒后，调用finish_wait函数执行清理工作，将当前进程置为TASK_RUNNING状态，并把当前wait队列项从等待队列中移除
 
 
+## 总结
 
+最后我们对上述的分析做一个总结：
 
-
-
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230529160635.png)
 
 ## 参考资料
+* 《Android 框架解密》
+* [Binder系列1—Binder Driver初探](http://gityuan.com/2015/11/01/binder-driver/)
+* [Android源码分析 - Binder驱动（下）](https://juejin.cn/post/7073783503791325214)
+* [理解Android Binder机制(1/3)：驱动篇](https://paul.pub/android-binder-driver/)
+
+## 关于
+
+我叫阿豪，2015 年毕业于国防科技大学，毕业后，在某单位从事信息化装备的研发工作。主要研究方向为 Android Framework 与 Linux Kernel，2023年春节后开始做 Android Framework 相关的技术分享。
+
+如果你对 Framework 感兴趣或者正在学习 Framework，可以参考我总结的[Android Framework 学习路线指南](https://github.com/yuandaimaahao/AndroidFrameworkTutorial),也可关注我的微信公众号，我会在公众号上持续分享我的经验，帮助正在学习的你少走一些弯路。学习过程中如果你有疑问或者你的经验想要分享给大家可以添加我的微信，我拉你进技术交流群。
+
+![](https://gitee.com/stingerzou/pic-bed/raw/master/img/4e7348e352774883ecb19ab021d6cee.jpg)
+
+
