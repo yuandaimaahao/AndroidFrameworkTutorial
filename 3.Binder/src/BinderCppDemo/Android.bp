@@ -1,0 +1,45 @@
+cc_defaults {
+    name: "BinderCppDemoflags",
+
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wno-unused-parameter",
+        "-Wno-missing-field-initializers",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+        "-Wno-incompatible-pointer-types",
+        "-Wno-sign-compare",
+    ],
+    product_variables: {
+        binder32bit: {
+            cflags: ["-DBINDER_IPC_32BIT=1"],
+        },
+    },
+}
+
+cc_binary {
+    name: "CppBinderClient",
+    defaults: ["BinderCppDemoflags"],
+    srcs: ["BinderClient.cpp", "BpHelloService.cpp"],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libutils",
+        "libbinder",
+    ],
+}
+
+cc_binary {
+    name: "CppBinderServer",
+    defaults: ["BinderCppDemoflags"],
+    srcs: ["BinderServer.cpp", "BnHelloService.cpp","BpHelloService.cpp"],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libutils",
+        "libbinder",
+    ],
+}

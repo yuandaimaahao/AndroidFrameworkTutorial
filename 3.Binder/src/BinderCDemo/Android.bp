@@ -1,0 +1,54 @@
+cc_defaults {
+    name: "bindertestflags",
+
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wno-unused-parameter",
+        "-Wno-missing-field-initializers",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+        "-Wno-incompatible-pointer-types",
+        "-Wno-sign-compare",
+    ],
+    product_variables: {
+        binder32bit: {
+            cflags: ["-DBINDER_IPC_32BIT=1"],
+        },
+    },
+
+    shared_libs: ["liblog"],
+}
+
+cc_binary {
+    name: "binderclient",
+    defaults: ["bindertestflags"],
+    vendor: true, 
+    srcs: [
+        "binder_client.c",
+        "binder.c",
+    ],
+}
+
+cc_binary {
+    name: "binderserver",
+    defaults: ["bindertestflags"],
+    vendor: true, 
+    srcs: [
+        "binder_server.c",
+        "binder.c",
+    ],
+}
+
+// cc_binary {
+//     name: "myservicemanager",
+//     defaults: ["mybindertest_flags"],
+//     srcs: [
+//         "service_manager.c",
+//         "binder.c",
+//     ],
+//     shared_libs: ["libcutils", "libselinux"],
+// }
+
