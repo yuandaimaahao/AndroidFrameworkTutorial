@@ -58,10 +58,13 @@
 
 ![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153046.png)
 
+这部分内容提供有[免费配套视频教程](https://space.bilibili.com/246522770/channel/collectiondetail?sid=1354523&ctype=0)
+
 这部分内容主要是让大家上手 Android 系统源码，对系统开发有一个感性的认知，主要有以下内容：
 
-* [AOSP 极速上手 视频教程](https://juejin.cn/post/7202634945171537977)
-* [系统开发工具 视频教程](https://juejin.cn/post/7216495812577427517)
+
+* [AOSP 极速上手](https://juejin.cn/post/7202634945171537977)
+* [系统开发工具](https://juejin.cn/post/7216495812577427517)
 * [添加 Product](https://juejin.cn/post/7203958049983529015)
 * pixel4 源码编译与刷机
 * 系统开发案例——儿童学习机家长模式初探

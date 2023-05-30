@@ -7,10 +7,9 @@
 
 本文依托于[Binder 程序示例之 C 语言篇](https://juejin.cn/post/7210245482861264955)中介绍的应用层示例程序来对驱动的实现做情景化分析。
 
-上文说到，ServiceManager 进入循环，开始读数据后，就进入休眠状态，直到有其他进程写入数据并唤醒他为止。接下来我们就来看看 ServiceManager 是怎么被唤醒的。
+上文说到，ServiceManager 进入循环，开始读数据后，就进入休眠状态，直到有其他进程写入数据并唤醒他为止。接下来我们就来看看 ServiceManager 是怎么被 Server 端唤醒的。
 
-
-## Service 主函数
+## Server 主函数
 
 ```c
 int main(int argc, char **argv)
@@ -41,20 +40,21 @@ int main(int argc, char **argv)
 
 ```
 
-binder_open 的调用流程与 ServiceManager 一致，这里不再重复
+binder_open 的调用流程与 ServiceManager 一致，这里不再重复，总结一下就是：binder_open 主要是初始化了一个 binder_proc 结构体，并插入到全局的链表 procs 中了。
 
-svcmgr_publish
+svcmgr_publish 用于发布一个服务,其具体实现如下：
 
 ```c
 int svcmgr_publish(struct binder_state *bs, uint32_t target, const char *name, void *ptr)
 {
     int status;
+
     unsigned iodata[512/4];
     struct binder_io msg, reply;
-
     bio_init(&msg, iodata, sizeof(iodata), 4);
     bio_put_uint32(&msg, 0);  // strict mode header
     bio_put_uint32(&msg, 0);
+    //SVC_MGR_NAME 值为 "android.os.IServiceManager"
     bio_put_string16_x(&msg, SVC_MGR_NAME);
     bio_put_string16_x(&msg, name);
     bio_put_obj(&msg, ptr);
@@ -74,7 +74,15 @@ int svcmgr_publish(struct binder_state *bs, uint32_t target, const char *name, v
 
     return status;
 }
+```
 
+这里构建了一个 binder_io 的结构体，参照[Binder 服务注册过程情景分析之C语言篇]()中的分析，其具体结构如下：
+
+
+
+
+
+```
 //binder_call 中的构造过程
 int binder_call(struct binder_state *bs,
                 struct binder_io *msg, struct binder_io *reply,
