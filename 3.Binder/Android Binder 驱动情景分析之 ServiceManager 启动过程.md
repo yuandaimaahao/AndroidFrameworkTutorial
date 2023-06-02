@@ -1,4 +1,4 @@
-# Android Binder 驱动情景分析之 ServiceManager 启动过程
+# [修订版]Android Binder 驱动情景分析之 ServiceManager 启动过程
 
 这是一个 Binder 相关的系列教程,持续更新中：
 
@@ -39,7 +39,6 @@
 
 内核启动时，会加载各类驱动，对于 binder 驱动，会执行 binder_init 函数， 完成驱动的注册与初始化。
    
-
 ```c
 // drivers/android/binder.c
 //为便于理解删减部分非核心代码
@@ -126,10 +125,148 @@ static int __init init_binder_device(const char *name)
 }
 ```
 
+这里涉及了 linux kernel 的 Shrinker 机制，这里先简单介绍一下：
+
+内核的核心功能之一是缓存（cache）管理；通过维护各种级别的缓存，内核能够显著提高性能。但是要小心不能让缓存无限制地增长，否则它们最终将耗尽所有内存。为了应对该问题，内核提供了一套 “shrinker” 接口（shrink 原意有收缩、减小的意思，在这里表示通过回收内存减小缓存体积），通过该机制，内存管理子系统可以（通过回调的方式）请求（相关缓存的管理者）丢弃部分缓存项，从而释放内存以供其他用途使用。
+
+在 binder 驱动中使用了 Shrinker 机制来回收内存页：
+
+```c
+//函数调用
+ret = binder_alloc_shrinker_init();
+
+//函数实现
+int binder_alloc_shrinker_init(void)
+{
+	//binder_alloc_lru 是一个 lru 链表，链表的节点是 binder_lru_page
+	int ret = list_lru_init(&binder_alloc_lru);
+
+	if (ret == 0) {
+		//注册 shrinker 结构体
+		ret = register_shrinker(&binder_shrinker);
+		if (ret)
+			list_lru_destroy(&binder_alloc_lru);
+	}
+	return ret;
+}
+
+
+//binder_alloc_lru 是一个 lru 链表，链表的节点是 binder_lru_page
+struct list_lru binder_alloc_lru; 
+
+struct binder_lru_page {
+	struct list_head lru;
+	struct page *page_ptr;
+	struct binder_alloc *alloc;
+};
+
+//需要使用者定义两个回调函数
+// 内存管理子系统在合适的时候就会调用这两个函数来回收内存，有点 jvm 内存回收那感觉
+//count_objects 用于计算能够被回收的对象的个数上限
+//scan_objects 用于回收内存
+static struct shrinker binder_shrinker = {
+	.count_objects = binder_shrink_count,
+	.scan_objects = binder_shrink_scan,
+	.seeks = DEFAULT_SEEKS,
+};
+
+static unsigned long
+binder_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
+{	
+	//直接返回 lru 链表的节点数
+	unsigned long ret = list_lru_count(&binder_alloc_lru);
+	return ret;
+}
+
+static unsigned long
+binder_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+{
+	unsigned long ret;
+
+	//list_lru_walk 用于遍历 lru 链表，并对每个链表节点执行 binder_alloc_free_page 函数
+	//binder_alloc_free_page 函数用于回收物理内存
+	ret = list_lru_walk(&binder_alloc_lru, binder_alloc_free_page,
+			    NULL, sc->nr_to_scan);
+	return ret;
+}
+
+//回收物理内存
+//具体实现需要了解 kernel 中内存管理相关的 API
+enum lru_status binder_alloc_free_page(struct list_head *item,
+				       struct list_lru_one *lru,
+				       spinlock_t *lock,
+				       void *cb_arg)
+{
+	struct mm_struct *mm = NULL;
+	//拿到 lru 链表
+	struct binder_lru_page *page = container_of(item,
+						    struct binder_lru_page,
+						    lru);
+	struct binder_alloc *alloc;
+	uintptr_t page_addr;
+	size_t index;
+	struct vm_area_struct *vma;
+
+	alloc = page->alloc;
+	if (!mutex_trylock(&alloc->mutex))
+		goto err_get_alloc_mutex_failed;
+
+	if (!page->page_ptr)
+		goto err_page_already_freed;
+
+	index = page - alloc->pages;
+	page_addr = (uintptr_t)alloc->buffer + index * PAGE_SIZE;
+	vma = binder_alloc_get_vma(alloc);
+	if (vma) {
+		if (!mmget_not_zero(alloc->vma_vm_mm))
+			goto err_mmget;
+		mm = alloc->vma_vm_mm;
+		if (!down_write_trylock(&mm->mmap_sem))
+			goto err_down_write_mmap_sem_failed;
+	}
+
+	list_lru_isolate(lru, item);
+	spin_unlock(lock);
+
+	if (vma) {
+		trace_binder_unmap_user_start(alloc, index);
+
+		zap_page_range(vma, page_addr, PAGE_SIZE);
+
+		trace_binder_unmap_user_end(alloc, index);
+
+		up_write(&mm->mmap_sem);
+		mmput(mm);
+	}
+
+	trace_binder_unmap_kernel_start(alloc, index);
+
+	__free_page(page->page_ptr);
+	page->page_ptr = NULL;
+
+	trace_binder_unmap_kernel_end(alloc, index);
+
+	spin_lock(lock);
+	mutex_unlock(&alloc->mutex);
+	return LRU_REMOVED_RETRY;
+
+err_down_write_mmap_sem_failed:
+	mmput_async(mm);
+err_mmget:
+err_page_already_freed:
+	mutex_unlock(&alloc->mutex);
+err_get_alloc_mutex_failed:
+	return LRU_SKIP;
+}
+
+```
+
+
 binder 驱动在 init 部分主要完成了以下工作：
 
-* 初始化 lru 链表，该链表用于管理内存页
+* 初始化 lru 链表，该链表用于管理内存页，并注册了 shrinker 结构体，在内存紧张时，对内存进行回收
 * 注册 binder 驱动
+
 
 ## 2. ServiceManager 启动过程
 
@@ -262,7 +399,9 @@ static int binder_open(struct inode *nodp, struct file *filp)
 	proc->pid = current->group_leader->pid;
 
 	//初始化两个链表
+	//死亡通知队列
 	INIT_LIST_HEAD(&proc->delivered_death);
+	//空闲线程队列
 	INIT_LIST_HEAD(&proc->waiting_threads);
 	
 	//将初始化好的 binder_proc 保存到 filp->private_data 中
@@ -276,33 +415,37 @@ static int binder_open(struct inode *nodp, struct file *filp)
 }
 
 
+//全局哈希链表 binder_procs，用于保存 binder_proc
+static HLIST_HEAD(binder_procs);
+
 // binder_proc 是 Binder 驱动中用于描述用户态进程的结构体
+// 添加了注释的部分就是 binder_open 中初始化的成员
 struct binder_proc {
-	struct hlist_node proc_node;
-	struct rb_root threads;
+	struct hlist_node proc_node; //挂载在全局binder_procs链表中的节点。
+	struct rb_root threads;	
 	struct rb_root nodes;
 	struct rb_root refs_by_desc;
 	struct rb_root refs_by_node;
-	struct list_head waiting_threads;
-	int pid;
-	struct task_struct *tsk;
+	struct list_head waiting_threads; //空闲线程队列
+	int pid; //当前进程的 pid
+	struct task_struct *tsk; //当前主线程的 task_struct
 	struct files_struct *files;
 	struct mutex files_lock;
 	struct hlist_node deferred_work_node;
 	int deferred_work;
 	bool is_dead;
 
-	struct list_head todo;
+	struct list_head todo; //进程待处理工作项队列
 	struct binder_stats stats;
-	struct list_head delivered_death;
+	struct list_head delivered_death; //死亡通知队列
 	int max_threads;
 	int requested_threads;
 	int requested_threads_started;
 	int tmp_ref;
 	struct binder_priority default_priority;
 	struct dentry *debugfs_entry;
-	struct binder_alloc alloc;
-	struct binder_context *context;
+	struct binder_alloc alloc; //用于管理 binder_buffer，binder_buffer 是对一次 RPC 调用使用的内存的描述
+	struct binder_context *context; //驱动上下文
 	spinlock_t inner_lock;
 	spinlock_t outer_lock;
 };
@@ -310,8 +453,6 @@ struct binder_proc {
 
 * binder_proc 是 binder 驱动中用于描述用户态进程的结构体
 * binder_open 的主要工作是初始化一个 binder_proc 结构体，并将其插入到全局链表 binder_procs 中
-
-
 
 关注点 5 处，应用程序调用 ioctl 向内核查询 binder 版本信息：
 
@@ -399,6 +540,7 @@ mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, bs->fd, 0) -> vfs -> binder_mmap
 	struct binder_proc *proc = filp->private_data;
 	const char *failure_string;
 
+	//得和binder_open 是同一个进程
 	if (proc->tsk != current->group_leader)
 		return -EINVAL;
 
@@ -486,7 +628,7 @@ int binder_alloc_mmap_handler(struct binder_alloc *alloc,
 	buffer->free = 1;
 	//将初始化好的 binder_buffer 插入 alloc.free_buffers 红黑树，
 	binder_insert_free_buffer(alloc, buffer);
-	//free_async_space 异步调用的空间
+	//free_async_space 异步调用可以使用的内存大小
 	alloc->free_async_space = alloc->buffer_size / 2;
 	//alloc->vma = vma
 	binder_alloc_set_vma(alloc, vma);
@@ -508,7 +650,42 @@ err_already_mapped:
 }
 ```
 
-可以看出，binder_mmap 主要工作是完成 binder_proc 的成员 binder_allc 结构体的初始化，没有分配物理内存与映射。
+可以看出，binder_mmap 主要工作是完成 binder_proc 的成员 binder_allc 结构体的初始化，没有分配物理内存与映射：
+
+```c
+struct binder_buffer {
+	struct list_head entry;   		// alloc->buffers 链表中的节点
+	struct rb_node rb_node;   		// alloc.free_buffers 红黑树中的节点
+	unsigned free:1;		  		// binder_buffer 空闲时，值为 true
+	unsigned allow_user_free:1;		// 值为 true，表示允许被清理
+	unsigned async_transaction:1;	// 值为 true，表示 binder_buffer 用于一个异步的远程调用
+	unsigned debug_id:29;
+
+	struct binder_transaction *transaction;  //RPC 过程中传输的数据
+
+	struct binder_node *target_node;		//binder_node 用于描述一个远程服务，target_node 就是当前 RPC 需要使用的服务
+	size_t data_size;						//数据区大小
+	size_t offsets_size;					//偏移区大小
+	size_t extra_buffers_size;				//额外区大小
+	void __user *user_data;
+};
+
+struct binder_alloc {
+	struct mutex mutex;
+	struct vm_area_struct *vma;
+	struct mm_struct *vma_vm_mm;
+	void __user *buffer;  //vma->vm_start，指向用户空间的开始位置
+	struct list_head buffers; //创建好一个 binder_buffer，并插入 buffers 链表
+	struct rb_root free_buffers; //创建好的 binder_buffer，也要插入 free_buffers 红黑树
+	struct rb_root allocated_buffers;
+	size_t free_async_space;
+	struct binder_lru_page *pages; //分配好内存,用于管理内存中的页
+	size_t buffer_size;
+	uint32_t buffer_free;
+	int pid;
+	size_t pages_high;
+};
+```
 
 这里涉及一个常见的面试题，binder 支持传递的最大内存是多少？
 
@@ -519,6 +696,7 @@ if ((vma->vm_end - vma->vm_start) > SZ_4M)
 ```
 
 在驱动层面的代码看，最多可以分配 4m 的映射区，当然具体多少还和应用层传递过来的参数有关。
+
 
 
 ### 2.2 binder_become_context_manager
@@ -1032,6 +1210,9 @@ schedule是真正执行进程调度的地方，由于之前进程状态已经被
 * [Binder系列1—Binder Driver初探](http://gityuan.com/2015/11/01/binder-driver/)
 * [Android源码分析 - Binder驱动（下）](https://juejin.cn/post/7073783503791325214)
 * [理解Android Binder机制(1/3)：驱动篇](https://paul.pub/android-binder-driver/)
+* [更好的 Shrinker 机制](https://tinylab.org/lwn-550463/)
+* [Android Binder通信数据结构介绍](https://blog.csdn.net/yangwen123/article/details/9100599)
+* [Android Binder 魅族团队](http://kernel.meizu.com/android-binder.html)
 
 ## 关于
 

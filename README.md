@@ -53,6 +53,8 @@
   * [Linux Shell 脚本编程入门1——核心基础语法](https://juejin.cn/post/7222931700439285817)
   * [Linux Shell 脚本编程入门2——脚本自动化基础](https://juejin.cn/post/7223669247711887416)
   * [Android 平台如何编译执行 C C++ 可执行程序](https://juejin.cn/post/7224898006842097725)
+  * [如何阅读 Android 系统源码 —— Java 篇](https://juejin.cn/post/7231809738203611194)
+  * [如何阅读 Android 系统源码 —— C/C++ 篇](https://juejin.cn/post/7231944822101098554)
 
 ## 3. AOSP快速上手路线
 
