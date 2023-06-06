@@ -6,7 +6,7 @@
 
 ![](https://gitee.com/stingerzou/pic-bed/raw/master/img/%E5%86%99%E7%BB%99%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E7%9A%84%20Android%20Framework%20%E6%95%99%E7%A8%8B.jpg)
 
-清晰的学习路线图可以在 ` 链接：https://pan.baidu.com/s/1F0Ibi8pHcYT39HASy3zvNw 提取码：1234  ` 处下载到。 
+清晰的学习路线图可以在 `链接：https://pan.baidu.com/s/1F0Ibi8pHcYT39HASy3zvNw 提取码：1234  ` 处下载到。 
 
 
 学习路线一共分为 11 个专题，接下来看看这 11 个专题都需要学习哪些内容：
