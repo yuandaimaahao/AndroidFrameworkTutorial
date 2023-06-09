@@ -32,90 +32,83 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 
 ## 2. 基础篇
 
-
-
 ![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153209.png)
-
 
 
 基础知识涉及的面很广，我们应该做好长期学习的准备，学习过程中做好笔记，及时复习和记忆。另外，我们应该一边学习系统源码，一遍学习基础，遇到不会的，再回头看看基础，形成知识记忆到应用的闭环。千万不要基础学完了，再去学习系统源码，效率低，效果差。
 
-
-
 基础部分我们主要掌握以下的学习内容：
-
-
 
 
 * Linux的基本使用：推荐学习 《Linux 运维之道 第二版》
 
 * 编程语言
 
-  * C 语言：《一站式学习C编程》、《C语言非常道》、《嵌入式C语言自我修养》
+  * C 语言：《一站式学习C编程》、《C语言非常道》、《嵌入式C语言自我修养》
 
-  * C++ ：《21天学通 C++》
+  * C++ ：《21天学通 C++》
 
-  * Java：《Java 核心技术》
+  * Java：《Java 核心技术》
 
-  * JNI：这个没有特别合适的书籍推荐，可以关注我的博客和公众号，后续会分享一些我的学习笔记。
+  * JNI：这个没有特别合适的书籍推荐，可以关注我的博客和公众号，后续会分享一些我的学习笔记。
 
 * 工具类编程语言和软件构建工具，学习这部分内容，主要是为了学习 Android 的编译系统，以及在日常工作中能完成一些自动化脚本的编写，提升工作效率
 
-  * Makefile：这个没有特别推荐的资料，可以关注我的博客和公众号，后续会分享一些我的学习笔记。
+  * Makefile：这个没有特别推荐的资料，可以关注我的博客和公众号，后续会分享一些我的学习笔记。
 
-  * Soong：这个主要就是参看源码中的写法以及参考官方提供的[文档](https://ci.android.com/builds/submitted/9155974/linux/latest/view/soong_build.html)
+  * Soong：这个主要就是参看源码中的写法以及参考官方提供的[文档](https://ci.android.com/builds/submitted/9155974/linux/latest/view/soong_build.html)
 
-  * Shell 脚本，推荐学习 《Linux Shell 核心编程指南》
+  * Shell 脚本，推荐学习 《Linux Shell 核心编程指南》
 
-  * Python，推荐学习 《Python 编程从入门到实战》
+  * Python，推荐学习 《Python 编程从入门到实战》
 
-  * Go，推荐学习 [Go 语言从入门到实战](https://time.geekbang.org/course/intro/100024001?tab=intro)
+  * Go，推荐学习 [Go 语言从入门到实战](https://time.geekbang.org/course/intro/100024001?tab=intro)
 
 
 
 * Linux 系统编程是比较重要的部分
 
-  * [Linux编程技术](https://www.icourse163.org/course/XIYOU-1461794181?from=searchPage&outVendor=zw_mooc_pcssjg_),这是西安邮电大学提供的一套 mooc 课程，可供入门学习使用
+  * [Linux编程技术](https://www.icourse163.org/course/XIYOU-1461794181?from=searchPage&outVendor=zw_mooc_pcssjg_),这是西安邮电大学提供的一套 mooc 课程，可供入门学习使用
 
-  * 《Linux 系统编程 杰克-本尼 佩尔松》
+  * 《Linux 系统编程 杰克-本尼 佩尔松》
 
-  * 《UNIX 环境高级编程》《Linux/Unix 系统编程手册》：这两本书可以作为编程过程中的字典使用
+  * 《UNIX 环境高级编程》《Linux/Unix 系统编程手册》：这两本书可以作为编程过程中的字典使用
 
 * Linux 内核入门与操作系统基础
 
-  * [操作系统及Linux内核](https://www.icourse163.org/course/XIYOU-1461809182?from=searchPage&outVendor=zw_mooc_pcssjg_)， 这是西安邮电大学提供的一套 mooc 课程，可供入门学习使用
+  * [操作系统及Linux内核](https://www.icourse163.org/course/XIYOU-1461809182?from=searchPage&outVendor=zw_mooc_pcssjg_)， 这是西安邮电大学提供的一套 mooc 课程，可供入门学习使用
 
-  * 《深入理解 Linux 内核 第三版》  
+  * 《深入理解 Linux 内核 第三版》  
 
-  * 《奔跑吧Linux 内核 系列书籍》
+  * 《奔跑吧Linux 内核 系列书籍》
 
-  * Linux 驱动开发入门：推荐韦东山老师 B 站分享的系列课程
+  * Linux 驱动开发入门：推荐韦东山老师 B 站分享的系列课程
 
 
 
 基础部分已分享内容：
 
-  * [Ubuntu 使用快速入门](https://juejin.cn/post/7203571284558381117)
+* [Ubuntu 使用快速入门](https://juejin.cn/post/7203571284558381117)
 
-  * [Make 构建工具入门](https://juejin.cn/post/7203931072261193787)
+* [Make 构建工具入门](https://juejin.cn/post/7203931072261193787)
 
-  * [理解 Unicode UTF-8 UTF-16 UTF-32](https://juejin.cn/post/7207365636694458425)
+* [理解 Unicode UTF-8 UTF-16 UTF-32](https://juejin.cn/post/7207365636694458425)
 
-  * [Linux Shell 脚本编程入门——核心基础语法](https://juejin.cn/post/7222931700439285817)
+* [Linux Shell 脚本编程入门——核心基础语法](https://juejin.cn/post/7222931700439285817)
 
-  * [SEAndroid 使用极速上手](https://juejin.cn/post/7208472817460248637)
+* [SEAndroid 使用极速上手](https://juejin.cn/post/7208472817460248637)
 
-  * [理解 C++ 的 Memory Order](https://juejin.cn/post/7216182763237146681)
+* [理解 C++ 的 Memory Order](https://juejin.cn/post/7216182763237146681)
 
-  * [Linux Shell 脚本编程入门1——核心基础语法](https://juejin.cn/post/7222931700439285817)
+* [Linux Shell 脚本编程入门1——核心基础语法](https://juejin.cn/post/7222931700439285817)
 
-  * [Linux Shell 脚本编程入门2——脚本自动化基础](https://juejin.cn/post/7223669247711887416)
+* [Linux Shell 脚本编程入门2——脚本自动化基础](https://juejin.cn/post/7223669247711887416)
 
-  * [Android 平台如何编译执行 C C++ 可执行程序](https://juejin.cn/post/7224898006842097725)
+* [Android 平台如何编译执行 C C++ 可执行程序](https://juejin.cn/post/7224898006842097725)
 
-  * [如何阅读 Android 系统源码 —— Java 篇](https://juejin.cn/post/7231809738203611194)
+* [如何阅读 Android 系统源码 —— Java 篇](https://juejin.cn/post/7231809738203611194)
 
-  * [如何阅读 Android 系统源码 —— C/C++ 篇](https://juejin.cn/post/7231944822101098554)
+* [如何阅读 Android 系统源码 —— C/C++ 篇](https://juejin.cn/post/7231944822101098554)
 
 
 
@@ -148,17 +141,17 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 
 * 系统模块添加
 
-    *   [添加 C/C++、Java 可执行程序](https://juejin.cn/post/7216624116337508412)
+  * [添加 C/C++、Java 可执行程序](https://juejin.cn/post/7216624116337508412)
 
-    *   [添加 C/C++、Java 库](https://juejin.cn/post/7217279252316045372)
+  * [添加 C/C++、Java 库](https://juejin.cn/post/7217279252316045372)
 
-    *   [添加配置文件与删除已有模块](https://juejin.cn/post/7217644586868391996)
+  * [添加配置文件与删除已有模块](https://juejin.cn/post/7217644586868391996)
 
 * 系统 App 开发入门 
 
-  * [系统 App 源码添加](https://juejin.cn/post/7207374216127103033)            
+  * [系统 App 源码添加](https://juejin.cn/post/7207374216127103033)            
 
-  * [使用 Android Studio 开发系统 App](https://juejin.cn/post/7207358268804579386)     
+  * [使用 Android Studio 开发系统 App](https://juejin.cn/post/7207358268804579386)     
 
 * [添加开机自启动 Shell 脚本](https://juejin.cn/post/7219712310586474553)
 
@@ -181,57 +174,32 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 
 Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是整个 Android 系统的核心基础组件，在体验的系统开发的“快乐”以后，我们需要第一时间掌握 Binder 的里里外外。计划分享以下内容：
 
-
-
 * 学习 Binder 的预备知识
-
-  * [虚拟内存与 Linux 文件访问接口](https://juejin.cn/post/7232459954581307448)
-
-  * [Linux 内核常用数据结构](https://juejin.cn/post/7234370256746348581)
-
-  * [linux 驱动开发入门](https://juejin.cn/post/7235309338097123388)
-
+  * [虚拟内存与 Linux 文件访问接口](https://juejin.cn/post/7232459954581307448)
+  * [Linux 内核常用数据结构](https://juejin.cn/post/7234370256746348581)
+  * [linux 驱动开发入门](https://juejin.cn/post/7235309338097123388)
 * [Binder 基本原理](https://juejin.cn/post/7210175991837392933)
-
 * [Binder 程序示例之 C 语言篇](https://juejin.cn/post/7210245482861264955)
-
 * [Binder 服务注册过程情景分析之C语言篇](https://juejin.cn/post/7214342319347712057)
-
 * [Binder 服务获取与使用过程情景分析之C语言篇](https://juejin.cn/post/7215401973842706491)
-
-* Binder 驱动情景分析之 ServiceManager 启动过程
-
-* Binder 驱动情景分析之服务注册过程
-
-* Binder 驱动情景分析之服务获取与使用过程
-
+* [Binder 驱动情景分析之 ServiceManager 启动过程](https://juejin.cn/post/7238491755446878267)
+* [Binder 驱动情景分析之服务注册过程](https://juejin.cn/post/7241452728747262013)
+* [Binder 驱动情景分析之服务获取与使用过程](https://juejin.cn/post/7241884241615831098)
 * [Binder C++ 程序示例](https://juejin.cn/post/7222109036588810297)
-
-* Binder 程序示例之 aidl-cpp 篇
-
+* [Binder 程序示例之 aidl-cpp 篇](https://juejin.cn/post/7242258285159546936)
 * [Binder C++ 程序分析之主要类解析](https://juejin.cn/post/7223185420157763641/)
-
 * [Binder 服务注册过程情景分析之 C++ 篇](https://juejin.cn/post/7223185420157943865)
-
 * [Binder 服务获取与使用过程情景分析之 C++ 篇](https://juejin.cn/post/7223410490763771941)
-
 * Binder 程序示例之 Java 篇
-
 * Binder Java 程序分析之主要类解析
-
 * Binder 服务注册过程情景分析之 Java 篇
-
 * Binder 服务获取与使用过程情景分析之 Java 篇
-
 * Binder 多线程分析
-
 * Binder 匿名服务分析
-
 * Binder 死亡通知机制
-
 * Binder 相关疑难 bug 解析
-
 * Binder 面试题解析
+
 
 
 
@@ -335,13 +303,13 @@ Hal 主要是对驱动功能做一些封装，下接驱动，上接 Framework，
 
 * AMS/ATMS 与四大组件
 
-  * Activity 启动过程与进程启动
+  * Activity 启动过程与进程启动
 
-  * Service 启动
+  * Service 启动
 
-  * ContentProvider 实现原理
+  * ContentProvider 实现原理
 
-  * 广播机制
+  * 广播机制
 
 * Handler与Looper消息处理机制
 
