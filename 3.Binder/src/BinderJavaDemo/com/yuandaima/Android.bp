@@ -1,0 +1,15 @@
+java_library {
+    name: "BinderClient",
+    installable: true,
+    srcs: [ "Client.java", 
+            "HelloService.java", 
+            "IHelloService.java" ],
+}
+
+java_library {
+    name: "BinderServer",
+    installable: true,
+    srcs: [ "Server.java", 
+            "HelloService.java", 
+            "IHelloService.java" ],
+}
