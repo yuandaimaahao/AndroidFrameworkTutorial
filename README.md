@@ -109,24 +109,29 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 * [如何阅读 Android 系统源码 —— Java 篇](https://juejin.cn/post/7231809738203611194)
 
 * [如何阅读 Android 系统源码 —— C/C++ 篇](https://juejin.cn/post/7231944822101098554)
-
-
+* [JNI 编程上手指南之 HelloWorld 实战](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/001.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20HelloWorld%20%E5%AE%9E%E6%88%98.md)
+* [JNI 编程上手指南之 JNI 数据类型](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/002.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20JNI%20%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B.md)
+* [JNI 编程上手指南之描述符](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/003.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E6%8F%8F%E8%BF%B0%E7%AC%A6.md)
+* [JNI 编程上手指南之 JNIEnv 详解](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/004.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20JNIEnv%20%E8%AF%A6%E8%A7%A3.md)
+* [JNI 编程上手指南之 JavaVM 详解](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/005.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20JavaVM%20%E8%AF%A6%E8%A7%A3.md)
+* [JNI 编程上手指南之字符串处理](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/006.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%A4%84%E7%90%86.md)
+* [JNI 编程上手指南之数组访问](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/007.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E6%95%B0%E7%BB%84%E8%AE%BF%E9%97%AE.md)
+* JNI 编程上手指南之 Native 访问 Java
+* JNI 编程上手指南之异常处理
+* JNI 编程上手指南之从内存角度再看引用类型
+* JNI 编程上手指南之 JNI 调用性能优化
+* JNI 编程上手指南之 Native Crash 分析
+* JNI 编程上手指南之多线程
 
 ## 3. AOSP快速上手路线
 
-
-
 ![](https://gitee.com/stingerzou/pic-bed/raw/master/img/20230417153046.png)
-
 
 
 这部分内容提供有[免费配套视频教程](https://space.bilibili.com/246522770/channel/collectiondetail?sid=1354523&ctype=0)
 
 
-
 这部分内容主要是让大家上手 Android 系统源码，对系统开发有一个感性的认知，主要有以下内容：
-
-
 
 
 * [AOSP 极速上手](https://juejin.cn/post/7202634945171537977)
@@ -190,7 +195,7 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 * [Binder C++ 程序分析之主要类解析](https://juejin.cn/post/7223185420157763641/)
 * [Binder 服务注册过程情景分析之 C++ 篇](https://juejin.cn/post/7223185420157943865)
 * [Binder 服务获取与使用过程情景分析之 C++ 篇](https://juejin.cn/post/7223410490763771941)
-* Binder 程序示例之 Java 篇
+* [Binder 程序示例之 Java 篇](https://juejin.cn/post/7242539077848662075)
 * Binder Java 程序分析之主要类解析
 * Binder 服务注册过程情景分析之 Java 篇
 * Binder 服务获取与使用过程情景分析之 Java 篇
