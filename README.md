@@ -118,8 +118,8 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 * [JNI 编程上手指南之字符串处理](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/006.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%A4%84%E7%90%86.md)
 * [JNI 编程上手指南之数组访问](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/007.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E6%95%B0%E7%BB%84%E8%AE%BF%E9%97%AE.md)
 * [JNI 编程上手指南之 Native 访问 Java](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/008.JNI%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20Native%20%E8%AE%BF%E9%97%AE%20Java.md)
-* JNI 编程上手指南之异常处理
-* JNI 编程上手指南之从内存角度再看引用类型
+* [JNI 编程上手指南之异常处理](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/009.JNI%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86.md)
+* [JNI 编程上手指南之从内存角度再看引用类型](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/010.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E4%BB%8E%E5%86%85%E5%AD%98%E8%A7%92%E5%BA%A6%E5%86%8D%E7%9C%8B%E5%BC%95%E7%94%A8%E7%B1%BB%E5%9E%8B.md)
 * JNI 编程上手指南之 JNI 调用性能优化
 * JNI 编程上手指南之 Native Crash 分析
 * JNI 编程上手指南之多线程
