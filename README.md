@@ -117,7 +117,7 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 * [JNI 编程上手指南之 JavaVM 详解](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/005.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20JavaVM%20%E8%AF%A6%E8%A7%A3.md)
 * [JNI 编程上手指南之字符串处理](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/006.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%A4%84%E7%90%86.md)
 * [JNI 编程上手指南之数组访问](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/007.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E6%95%B0%E7%BB%84%E8%AE%BF%E9%97%AE.md)
-* JNI 编程上手指南之 Native 访问 Java
+* [JNI 编程上手指南之 Native 访问 Java](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/008.JNI%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20Native%20%E8%AE%BF%E9%97%AE%20Java.md)
 * JNI 编程上手指南之异常处理
 * JNI 编程上手指南之从内存角度再看引用类型
 * JNI 编程上手指南之 JNI 调用性能优化
