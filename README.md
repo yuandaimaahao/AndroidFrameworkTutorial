@@ -164,7 +164,7 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 * 系统源码管理工具 Gerrit 搭建与使用
 
 
-
+这部分内容已整理到 https://github.com/yuandaimaahao/AOSPTutorial
 
 ## 4.Binder
 
@@ -203,7 +203,7 @@ Binder 是一套 linux 上的 **远程过程调用（RPC）** 编程框架，是
 * Binder 面试题解析
 
 
-
+这部分内容已整理到 https://github.com/yuandaimaahao/AndroidBinderTutorial
 
 ## 5.基础组件
 
