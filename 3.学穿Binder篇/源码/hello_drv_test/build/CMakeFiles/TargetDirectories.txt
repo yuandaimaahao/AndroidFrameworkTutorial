@@ -1,0 +1,3 @@
+/home/android/Project/hello_drv_test/build/CMakeFiles/rebuild_cache.dir
+/home/android/Project/hello_drv_test/build/CMakeFiles/edit_cache.dir
+/home/android/Project/hello_drv_test/build/CMakeFiles/hello_drv_test.dir

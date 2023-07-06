@@ -90,25 +90,15 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 基础部分已分享内容：
 
 * [Ubuntu 使用快速入门](https://juejin.cn/post/7203571284558381117)
-
 * [Make 构建工具入门](https://juejin.cn/post/7203931072261193787)
-
 * [理解 Unicode UTF-8 UTF-16 UTF-32](https://juejin.cn/post/7207365636694458425)
-
 * [Linux Shell 脚本编程入门——核心基础语法](https://juejin.cn/post/7222931700439285817)
-
 * [SEAndroid 使用极速上手](https://juejin.cn/post/7208472817460248637)
-
 * [理解 C++ 的 Memory Order](https://juejin.cn/post/7216182763237146681)
-
 * [Linux Shell 脚本编程入门1——核心基础语法](https://juejin.cn/post/7222931700439285817)
-
 * [Linux Shell 脚本编程入门2——脚本自动化基础](https://juejin.cn/post/7223669247711887416)
-
 * [Android 平台如何编译执行 C C++ 可执行程序](https://juejin.cn/post/7224898006842097725)
-
 * [如何阅读 Android 系统源码 —— Java 篇](https://juejin.cn/post/7231809738203611194)
-
 * [如何阅读 Android 系统源码 —— C/C++ 篇](https://juejin.cn/post/7231944822101098554)
 * [JNI 编程上手指南之 HelloWorld 实战](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/001.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20HelloWorld%20%E5%AE%9E%E6%88%98.md)
 * [JNI 编程上手指南之 JNI 数据类型](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/002.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%20JNI%20%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B.md)
@@ -121,7 +111,6 @@ Android 系统开发涉及的知识面很广，代码量大，复杂度高，相
 * [JNI 编程上手指南之异常处理](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/009.JNI%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86.md)
 * [JNI 编程上手指南之从内存角度再看引用类型](https://github.com/yuandaimaahao/AndroidFrameworkTutorial/blob/main/1.%E5%9F%BA%E7%A1%80%E7%AF%87/JNI%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8/010.JNI%20%E7%BC%96%E7%A8%8B%E4%B8%8A%E6%89%8B%E6%8C%87%E5%8D%97%E4%B9%8B%E4%BB%8E%E5%86%85%E5%AD%98%E8%A7%92%E5%BA%A6%E5%86%8D%E7%9C%8B%E5%BC%95%E7%94%A8%E7%B1%BB%E5%9E%8B.md)
 * JNI 编程上手指南之 JNI 调用性能优化
-* JNI 编程上手指南之 Native Crash 分析
 * JNI 编程上手指南之多线程
 
 ## 3. AOSP快速上手路线
