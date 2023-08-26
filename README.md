@@ -1,3 +1,6 @@
+
+为了更好的阅读体验，文章已迁移到 https://yuandaimaahao.github.io/AndroidFrameworkTutorialPages/
+
 ## 1. 为什么要学习 Android Framework？
 
 作为一名应用层 App 开发工程师，我们为什么要学习 Android Framework？答案很简单，为了不被淘汰！在 2023 年的当下,不会点 `Binder WMS AMS PMS` 好像都找不到工作了，更过分的是应聘企业甚至希望你会点 `RN Fluter` 等跨平台技术，顺便能掌握点前端技术就更好了，活生生的面试造火箭！对于市面上 99% 的 App 的开发是不需要我们掌握 Framework 的，企业去面试这些，只是为了筛人罢了，因为收到的简历确实太多了，常规的题目已经无法对应聘者做出筛选了。

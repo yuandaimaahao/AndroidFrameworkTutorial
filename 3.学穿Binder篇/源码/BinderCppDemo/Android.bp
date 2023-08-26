@@ -1,7 +1,6 @@
 cc_defaults {
     name: "BinderCppDemoflags",
 
-
     cflags: [
         "-Wall",
         "-Wextra",
