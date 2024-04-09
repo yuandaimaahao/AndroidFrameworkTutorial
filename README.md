@@ -1,5 +1,5 @@
 
-为了更好的阅读体验，文章已迁移到 https://yuandaimaahao.github.io/AndroidFrameworkTutorialPages/
+**为了更好的阅读体验，文章已迁移到 ahaoframework.tech**
 
 ## 1. 为什么要学习 Android Framework？
 
